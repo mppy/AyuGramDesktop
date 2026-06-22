@@ -45,11 +45,48 @@ jobs:
 
       - name: Add upstream remote + sync (if requested)
         if: ${{ github.event.inputs.upstream_tag != '' }}
+        id: upstream_sync
         run: |
           git remote add upstream https://github.com/telegramdesktop/tdesktop.git
           git fetch upstream --tags
-          git merge upstream/${{ github.event.inputs.upstream_tag }} --no-edit
-          echo "Merged upstream ${{ github.event.inputs.upstream_tag }}"
+          echo "Attempting merge upstream/${{ github.event.inputs.upstream_tag }}..."
+          if git merge upstream/${{ github.event.inputs.upstream_tag }} --no-edit; then
+            echo "merge_status=success" >> $GITHUB_OUTPUT
+            echo "Merged upstream ${{ github.event.inputs.upstream_tag }} successfully"
+          else
+            echo "merge_status=conflict" >> $GITHUB_OUTPUT
+            echo "::warning::Merge conflicts detected. Listing conflicted files:"
+            git diff --name-only --diff-filter=U
+            # Abort merge — cannot build with conflicts
+            git merge --abort
+            exit 1
+          fi
+
+      - name: Create issue on merge conflict
+        if: ${{ failure() && steps.upstream_sync.outputs.merge_status == 'conflict' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Merge conflict: upstream ${{ github.event.inputs.upstream_tag }}`,
+              body: `Auto-sync from tdesktop ${{ github.event.inputs.upstream_tag }} failed due to merge conflicts.
+
+            **Run:** ${context.runId}
+            **Triggered by:** ${context.actor}
+
+            Conflicted files need manual resolution. Run locally:
+            \`\`\`
+            git fetch upstream
+            git merge upstream/${{ github.event.inputs.upstream_tag }}
+            # resolve conflicts...
+            git push origin dev
+            \`\`\`
+
+            Then re-trigger build manually.`,
+              labels: ['merge-conflict', 'auto-sync']
+            })
 
       - name: Setup Python
         uses: actions/setup-python@v5
