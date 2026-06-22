@@ -1,0 +1,142 @@
+name: Build Windows x64
+
+on:
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: 'Upstream tdesktop tag to sync (e.g. v6.9.3). Leave empty for no sync.'
+        required: false
+        default: ''
+      build_config:
+        description: 'Build configuration (Debug or Release)'
+        required: false
+        default: 'Release'
+
+  # Auto-trigger when push to dev branch (after sync)
+  push:
+    branches: [ dev ]
+    paths:
+      - 'Telegram/**'
+      - 'lib/**'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/build-windows.yml'
+
+  # Weekly schedule: Sunday 03:00 UTC (10:00 UTC+7)
+  schedule:
+    - cron: '0 3 * * 0'
+
+env:
+  BUILD_CONFIG: ${{ github.event.inputs.build_config || 'Release' }}
+
+jobs:
+  build:
+    name: Build Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Add upstream remote + sync (if requested)
+        if: ${{ github.event.inputs.upstream_tag != '' }}
+        run: |
+          git remote add upstream https://github.com/telegramdesktop/tdesktop.git
+          git fetch upstream --tags
+          git merge upstream/${{ github.event.inputs.upstream_tag }} --no-edit
+          echo "Merged upstream ${{ github.event.inputs.upstream_tag }}"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Setup NASM
+        run: |
+          choco install nasm -y
+          echo "C:\Program Files\NASM" >> $env:GITHUB_PATH
+
+      - name: Prepare build environment
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cd Telegram
+          call build\prepare\win.bat
+        env:
+          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+
+      - name: Configure build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cd Telegram
+          call configure.bat x64 -D TDESKTOP_API_ID=%TDESKTOP_API_ID% -D TDESKTOP_API_HASH=%TDESKTOP_API_HASH%
+        env:
+          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+
+      - name: Build AyuGram
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          msbuild out\Telegram.slnx /p:Configuration=${{ env.BUILD_CONFIG }} /p:Platform=x64 /m /v:m
+        timeout-minutes: 60
+
+      - name: Package portable binary
+        shell: pwsh
+        run: |
+          $config = "${{ env.BUILD_CONFIG }}"
+          $binaryPath = "out\$config\AyuGram.exe"
+          if (-not (Test-Path $binaryPath)) {
+            # Try alternate path
+            $binaryPath = "out\Telegram.slnx\..\$config\AyuGram.exe"
+          }
+          if (-not (Test-Path $binaryPath)) {
+            throw "AyuGram.exe not found at $binaryPath"
+          }
+
+          # Create portable package
+          $packageName = "AyuGram-${{ github.run_id }}-win-x64-portable"
+          New-Item -ItemType Directory -Path $packageName -Force
+          Copy-Item $binaryPath -Destination "$packageName\AyuGram.exe"
+
+          # Copy required runtime files if exist
+          $binsDir = "out\$config"
+          if (Test-Path $binsDir) {
+            Get-ChildItem $binsDir -Filter "*.dll" | Copy-Item -Destination $packageName
+          }
+
+          Compress-Archive -Path "$packageName\*" -DestinationPath "$packageName.zip" -Force
+          Write-Host "Package created: $packageName.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AyuGram-win-x64-${{ github.run_id }}
+          path: AyuGram-*.zip
+          retention-days: 30
+
+      - name: Create release (only on manual trigger with upstream_tag)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.upstream_tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ayugram-sync-${{ github.event.inputs.upstream_tag }}-${{ github.run_number }}
+          name: AyuGram ${{ github.event.inputs.upstream_tag }} sync (build ${{ github.run_number }})
+          body: |
+            Auto-built AyuGram fork synced with tdesktop ${{ github.event.inputs.upstream_tag }}
+
+            **Build:** ${{ github.run_id }}
+            **Config:** ${{ env.BUILD_CONFIG }}
+            **Commit:** ${{ github.sha }}
+
+            ⚠️ Test before daily use. Report issues in GitHub Issues.
+          files: AyuGram-*.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
