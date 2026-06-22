@@ -3,17 +3,20 @@
 #   powershell -ExecutionPolicy Bypass -File build-ayugram.ps1
 #
 # What it does:
-#   1. Clone/update fork
-#   2. Prepare dependencies (first time only, ~30 min)
-#   3. Configure build with API credentials
-#   4. Build Release x64
-#   5. Copy binary to output folder
+#   1. Load VS build environment (vcvars64.bat)
+#   2. Add Ninja to PATH
+#   3. Clone/update fork
+#   4. Prepare dependencies (first time only, ~30 min)
+#   5. Configure build with API credentials
+#   6. Build Release x64
+#   7. Copy binary to output folder
 
 param(
     [string]$BuildPath = "D:\TBuild",
     [string]$Config = "Release",
     [string]$ApiId = "13994409",
     [string]$ApiHash = "9d0860cf26be00e72647bd516e648676",
+    [string]$VSPath = "C:\Program Files\Microsoft Visual Studio\2022\Community",
     [switch]$SkipPrepare  # Skip dependency prep (after first successful build)
 )
 
@@ -25,6 +28,77 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "BuildPath: $BuildPath"
 Write-Host "Config:    $Config"
 Write-Host ""
+
+# Step 0: Load VS build environment (vcvars64.bat)
+Write-Host "[0/5] Load VS 2022 build environment..." -ForegroundColor Yellow
+
+if (-not (Test-Path $VSPath)) {
+    # Try Enterprise/Professional editions
+    $altPaths = @(
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise",
+        "C:\Program Files\Microsoft Visual Studio\2022\Professional",
+        "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools"
+    )
+    foreach ($alt in $altPaths) {
+        if (Test-Path $alt) { $VSPath = $alt; break }
+    }
+}
+
+$vcvarsPath = Join-Path $VSPath "VC\Auxiliary\Build\vcvars64.bat"
+if (-not (Test-Path $vcvarsPath)) {
+    throw "vcvars64.bat not found at $vcvarsPath. Install VS 2022 with C++ workload."
+}
+
+Write-Host "  Loading from: $vcvarsPath"
+
+# Run vcvars64.bat and capture environment
+$envOutput = & cmd /c "`"$vcvarsPath`" >nul 2>&1 && set"
+foreach ($line in $envOutput) {
+    if ($line -match "^([^=]+)=(.*)$") {
+        [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+    }
+}
+
+# Verify cl.exe is available
+$clVersion = & cl 2>&1 | Select-Object -First 1
+if ($clVersion -notmatch "Microsoft.*C/C\+\+") {
+    throw "cl.exe not available after vcvars64.bat. VS install may be incomplete."
+}
+Write-Host "  cl.exe: $clVersion" -ForegroundColor Green
+
+# Step 0b: Add Ninja to PATH (bundled with VS CMake)
+$ninjaPaths = @(
+    (Join-Path $VSPath "Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja"),
+    "C:\Program Files\CMake\bin",
+    "C:\ninja"
+)
+foreach ($ninjaPath in $ninjaPaths) {
+    if (Test-Path (Join-Path $ninjaPath "ninja.exe")) {
+        $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "Process")
+        if ($currentPath -notlike "*$ninjaPath*") {
+            [System.Environment]::SetEnvironmentVariable("Path", "$ninjaPath;$currentPath", "Process")
+        }
+        Write-Host "  Ninja found: $ninjaPath" -ForegroundColor Green
+        break
+    }
+}
+
+# Verify ninja
+$ninjaVersion = & ninja --version 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "  ninja.exe: v$ninjaVersion" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: ninja.exe not found. Install Ninja or add to PATH." -ForegroundColor Yellow
+    Write-Host "  Download: https://github.com/ninja-build/ninja/releases" -ForegroundColor Yellow
+}
+
+# Verify cmake
+$cmakeVersion = & cmake --version 2>&1 | Select-Object -First 1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "  $cmakeVersion" -ForegroundColor Green
+} else {
+    throw "cmake not found. Add CMake to PATH."
+}
 
 # Step 1: Clone or update fork
 Write-Host "[1/5] Clone/update fork..." -ForegroundColor Yellow
