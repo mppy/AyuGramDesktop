@@ -306,6 +306,7 @@ bool PeerListGlobalSearchController::searchInCache() {
 
 void PeerListGlobalSearchController::searchOnServer() {
 	_requestId = _api.request(MTPcontacts_Search(
+		MTP_flags(0),
 		MTP_string(_query),
 		MTP_int(SearchPeopleLimit)
 	)).done([=](const MTPcontacts_Found &result, mtpRequestId requestId) {
@@ -809,9 +810,29 @@ void ContactsBoxController::setStoriesShown(bool shown) {
 
 void ContactsBoxController::sort() {
 	switch (_sortMode) {
-	case SortMode::Alphabet: sortByName(); break;
-	case SortMode::Online: sortByOnline(); break;
+	case SortMode::Alphabet:
+		sortByName();
+		applySectionHeaders();
+		delegate()->peerListSetShowSectionHeaders(true);
+		break;
+	case SortMode::Online:
+		sortByOnline();
+		delegate()->peerListSetShowSectionHeaders(false);
+		break;
 	default: Unexpected("SortMode in ContactsBoxController.");
+	}
+}
+
+void ContactsBoxController::applySectionHeaders() {
+	const auto count = delegate()->peerListFullRowsCount();
+	for (auto i = 0; i != count; ++i) {
+		const auto row = delegate()->peerListRowAt(i);
+		const auto peer = row->peer();
+		const auto &key = peer->owner().history(peer)->chatListNameSortKey();
+		const auto first = key.isEmpty() ? QChar() : key[0];
+		row->setSection(first.isLetter()
+			? QString(first.toUpper())
+			: u"#"_q);
 	}
 }
 

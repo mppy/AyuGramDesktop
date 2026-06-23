@@ -966,8 +966,7 @@ void InnerWidget::fill() {
 		const auto button = Info::BotStarRef::AddViewListButton(
 			container,
 			tr::lng_credits_summary_earn_title(),
-			tr::lng_credits_summary_earn_about(),
-			true);
+			tr::lng_credits_summary_earn_about());
 		button->setClickedCallback([=] {
 			_controller->showSection(Info::BotStarRef::Join::Make(_peer));
 		});
@@ -1412,7 +1411,7 @@ void InnerWidget::fill() {
 			phrase());
 
 		button->toggleOn(rpl::single(
-			data.switchedOff
+			_state.currencyEarn.switchedOff
 		) | rpl::then(toggled->events()));
 		button->setToggleLocked(isLocked);
 

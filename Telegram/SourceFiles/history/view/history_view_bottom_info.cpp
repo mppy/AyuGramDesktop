@@ -77,6 +77,20 @@ namespace {
 	return map.back().text;
 }
 
+[[nodiscard]] QString FormatEditedDate(QDateTime sent, QDateTime edited) {
+	const auto today = QDateTime::currentDateTime().date();
+	const auto time = QLocale().toString(edited.time(), QLocale::ShortFormat);
+	if (sent.date() == today && edited.date() == today) {
+		return tr::lng_edited_at(tr::now, lt_time, time);
+	}
+	return tr::lng_edited_on(
+		tr::now,
+		lt_date,
+		langDayOfMonthShort(edited.date()),
+		lt_time,
+		time);
+}
+
 } // namespace
 
 struct BottomInfo::Effect {
@@ -296,6 +310,18 @@ void BottomInfo::paint(
 		authorEditedWidth,
 		outerWidth);
 
+	if (_data.flags & Data::Flag::Silent) {
+		const auto &icon = inverted
+			? st->historySilentInvertedIcon()
+			: stm->historySilentIcon;
+		right -= st::historySilentWidth;
+		icon.paint(
+			p,
+			right,
+			firstLineBottom + st::historySilentTop,
+			outerWidth);
+	}
+
 	if (_data.flags & Data::Flag::Pinned) {
 		const auto &icon = inverted
 			? st->historyPinInvertedIcon()
@@ -454,159 +480,47 @@ void BottomInfo::layout() {
 }
 
 void BottomInfo::layoutDateText() {
-	const auto &settings = AyuSettings::getInstance();
-
-	if (!settings.replaceBottomInfoWithIcons()) {
-		const auto deleted = (_data.flags & Data::Flag::AyuDeleted)
-			? (settings.deletedMark() + ' ')
-			: QString();
-		const auto edited = (_data.flags & Data::Flag::Edited)
-			? (settings.editedMark() + ' ')
-			: (_data.flags & Data::Flag::EstimateDate)
-			? (tr::lng_approximate(tr::now) + ' ')
-			: _data.scheduleRepeatPeriod
-			? (SchedulePeriodText(_data.scheduleRepeatPeriod) + ' ')
-			: QString();
-		const auto author = settings.filterZalgo() ? filterZalgo(_data.author) : _data.author;
-		const auto prefix = !author.isEmpty() ? u", "_q : QString();
-		const auto date = edited + ((_data.flags & Data::Flag::ForwardedDate)
-			? Ui::FormatDateTimeSavedFrom(_data.date)
-			: formatMessageTime(_data.date.time()));
-		const auto afterAuthor = prefix + date;
-		const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
-		const auto authorWidth = st::msgDateFont->width(author);
-		const auto maxWidth = st::maxSignatureSize;
-		_authorElided = !author.isEmpty()
-			&& (authorWidth + afterAuthorWidth > maxWidth);
-		const auto name = _authorElided
-			? st::msgDateFont->elided(author, maxWidth - afterAuthorWidth)
-			: author;
-		const auto full = (_data.flags & Data::Flag::Sponsored)
-			? QString()
-			: (_data.flags & Data::Flag::Imported)
-			? (deleted + date + ' ' + tr::lng_imported(tr::now))
-			: name.isEmpty()
-			? (deleted + date)
-			: (deleted + name + afterAuthor);
-		auto helper = Ui::Text::CustomEmojiHelper(
-			Core::TextContext({ .session = &_reactionsOwner->session() }));
-		auto marked = TextWithEntities();
-		if (const auto count = _data.stars) {
-			marked.append(
-				Ui::Text::IconEmoji(&st::starIconEmojiSmall)
-			).append(Lang::FormatCountToShort(count).string).append(u", "_q);
-		}
-		if (const auto stake = _data.tonStake) {
-			marked.append(
-				QString::number(stake / 1e9)
-			).append(helper.image({
-				.image = Ui::Emoji::SinglePixmap(
-					Ui::Emoji::Find(QString::fromUtf8("\xf0\x9f\x92\x8e")),
-					Ui::Emoji::GetSizeNormal()).toImage().scaledToHeight(
-						st::stakeIconEmojiSize * style::DevicePixelRatio(),
-						Qt::SmoothTransformation),
-				.margin = QMargins(0, st::stakeIconEmojiTop, 0, 0),
-				.textColor = false,
-			})).append("  ");
-		}
-		if (_data.flags & Data::Flag::AyuBurnt) {
-			marked.append(Ui::Text::IconEmoji(&st::burntIcon));
-			marked.append(' ');
-		}
-		marked.append(full);
-		_authorEditedDate.setMarkedText(
-			st::msgDateTextStyle,
-			marked,
-			Ui::NameTextOptions(),
-			helper.context());
-	} else {
-		TextWithEntities burnt;
-		if (_data.flags & Data::Flag::AyuBurnt) {
-			burnt = Ui::Text::IconEmoji(&st::burntIcon);
-			if (!(_data.flags & Data::Flag::AyuDeleted)
-				&& !(_data.flags & Data::Flag::Edited)) {
-				burnt.append(' ');
-			}
-		}
-
-		TextWithEntities deleted;
-		if (_data.flags & Data::Flag::AyuDeleted) {
-			deleted = Ui::Text::IconEmoji(&st::deletedIcon);
-			if (!(_data.flags & Data::Flag::Edited)) {
-				deleted.append(' ');
-			}
-		}
-
-		TextWithEntities edited;
-		if (_data.flags & Data::Flag::Edited) {
-			edited = Ui::Text::IconEmoji(&st::editedIcon);
-			edited.append(' ');
-		} else if (_data.flags & Data::Flag::EstimateDate) {
-			edited = TextWithEntities{ tr::lng_approximate(tr::now) + ' ' };
-		} else if (_data.scheduleRepeatPeriod) {
-			edited = TextWithEntities{ SchedulePeriodText(_data.scheduleRepeatPeriod) + ' ' };
-		}
-
-		const auto author = settings.filterZalgo() ? filterZalgo(_data.author) : _data.author;
-		const auto prefix = !author.isEmpty() ? (_data.flags & Data::Flag::Edited ? u" "_q : u", "_q) : QString();
-
-		const auto dateStr = (_data.flags & Data::Flag::ForwardedDate)
-			? Ui::FormatDateTimeSavedFrom(_data.date)
-			: formatMessageTime(_data.date.time());
-
-		const auto date = TextWithEntities{}
-			.append(edited)
-			.append(dateStr);
-
-		const auto afterAuthor = TextWithEntities{}.append(prefix).append(date);
-		const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor.text);
-		const auto authorWidth = st::msgDateFont->width(author);
-		const auto maxWidth = st::maxSignatureSize;
-		_authorElided = !author.isEmpty()
-			&& (authorWidth + afterAuthorWidth > maxWidth);
-		const auto name = _authorElided
-			? st::msgDateFont->elided(author, maxWidth - afterAuthorWidth)
-			: author;
-
-		auto full = TextWithEntities{};
-		if (_data.flags & Data::Flag::Sponsored) {
-			// ...
-		} else if (_data.flags & Data::Flag::Imported) {
-			full.append(burnt).append(deleted).append(date).append(' ').append(tr::lng_imported(tr::now));
-		} else if (name.isEmpty()) {
-			full.append(burnt).append(deleted).append(date);
-		} else {
-			full.append(burnt).append(deleted).append(name).append(afterAuthor);
-		}
-
-		auto helper = Ui::Text::CustomEmojiHelper(
-			Core::TextContext({ .session = &_reactionsOwner->session() }));
-		auto marked = TextWithEntities();
-		if (const auto count = _data.stars) {
-			marked.append(
-				Ui::Text::IconEmoji(&st::starIconEmojiSmall)
-			).append(Lang::FormatCountToShort(count).string).append(u", "_q);
-		}
-		if (const auto stake = _data.tonStake) {
-			marked.append(
-				QString::number(stake / 1e9)
-			).append(helper.image({
-				.image = Ui::Emoji::SinglePixmap(
-					Ui::Emoji::Find(QString::fromUtf8("\xf0\x9f\x92\x8e")),
-					Ui::Emoji::GetSizeNormal()).toImage().scaledToHeight(
-						st::stakeIconEmojiSize * style::DevicePixelRatio(),
-						Qt::SmoothTransformation),
-				.margin = QMargins(0, st::stakeIconEmojiTop, 0, 0),
-				.textColor = false,
-			})).append("  ");
-		}
-		marked.append(full);
-
-		_authorEditedDate.setMarkedText(
-			st::msgDateTextStyle,
-			marked,
-			Ui::NameTextOptions(),
-			helper.context());
+	const auto editedPrimary = (_data.flags & Data::Flag::EditedPrimary)
+		&& !(_data.flags & Data::Flag::ForwardedDate);
+	const auto edited = editedPrimary
+		? QString()
+		: (_data.flags & Data::Flag::Edited)
+		? (tr::lng_edited(tr::now) + ' ')
+		: (_data.flags & Data::Flag::EstimateDate)
+		? (tr::lng_approximate(tr::now) + ' ')
+		: _data.scheduleRepeatPeriod
+		? (SchedulePeriodText(_data.scheduleRepeatPeriod) + ' ')
+		: QString();
+	const auto author = _data.author;
+	const auto prefix = !author.isEmpty() ? u", "_q : QString();
+	const auto date = editedPrimary
+		? FormatEditedDate(_data.date, _data.editedDate)
+		: edited + ((_data.flags & Data::Flag::ForwardedDate)
+		? Ui::FormatDateTimeSavedFrom(_data.date)
+		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
+	const auto afterAuthor = prefix + date;
+	const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
+	const auto authorWidth = st::msgDateFont->width(author);
+	const auto maxWidth = st::maxSignatureSize;
+	_authorElided = !author.isEmpty()
+		&& (authorWidth + afterAuthorWidth > maxWidth);
+	const auto name = _authorElided
+		? st::msgDateFont->elided(author, maxWidth - afterAuthorWidth)
+		: author;
+	const auto full = (_data.flags & Data::Flag::Sponsored)
+		? QString()
+		: (_data.flags & Data::Flag::Imported)
+		? (date + ' ' + tr::lng_imported(tr::now))
+		: name.isEmpty()
+		? date
+		: (name + afterAuthor);
+	auto helper = Ui::Text::CustomEmojiHelper(
+		Core::TextContext({ .session = &_reactionsOwner->session() }));
+	auto marked = TextWithEntities();
+	if (const auto count = _data.stars) {
+		marked.append(
+			Ui::Text::IconEmoji(&st::starIconEmojiSmall)
+		).append(Lang::FormatCountToShort(count).string).append(u", "_q);
 	}
 }
 
@@ -665,6 +579,9 @@ QSize BottomInfo::countOptimalSize() {
 	}
 	if (_data.flags & Data::Flag::Pinned) {
 		width += st::historyPinWidth;
+	}
+	if (_data.flags & Data::Flag::Silent) {
+		width += st::historySilentWidth;
 	}
 	_effectMaxWidth = countEffectMaxWidth();
 	width += _effectMaxWidth;
@@ -742,8 +659,12 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 			}
 		}
 	}
-	if (message->displayedEditDate()) {
+	if (const auto editedDate = message->displayedEditDate()) {
 		result.flags |= Flag::Edited;
+		if (item->history()->session().messagePrimaryEditedDate()) {
+			result.flags |= Flag::EditedPrimary;
+			result.editedDate = base::unixtime::parse(editedDate);
+		}
 	}
 	if (const auto views = item->Get<HistoryMessageViews>()) {
 		if (views->views.count >= 0) {
@@ -784,6 +705,9 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 	}
 	if (item->isScheduled()) {
 		result.scheduleRepeatPeriod = item->scheduleRepeatPeriod();
+		if (item->isSilent()) {
+			result.flags |= Flag::Silent;
+		}
 	}
 	if (item->isDeleted()) {
 		result.flags |= Flag::AyuDeleted;

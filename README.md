@@ -2,7 +2,11 @@
 
 ![AyuGram Logo](.github/AyuGram.png) ![AyuChan](.github/AyuChan.png)
 
-[ English  |   [Русский](README-RU.md) ]
+[![Version](https://badge.fury.io/gh/telegramdesktop%2Ftdesktop.svg)](https://github.com/telegramdesktop/tdesktop/releases)
+[![Build Status](https://github.com/telegramdesktop/tdesktop/workflows/Windows./badge.svg)](https://github.com/telegramdesktop/tdesktop/actions)
+[![Build Status](https://github.com/telegramdesktop/tdesktop/workflows/MacOS./badge.svg)](https://github.com/telegramdesktop/tdesktop/actions)
+[![Build Status](https://github.com/telegramdesktop/tdesktop/workflows/Linux./badge.svg)](https://github.com/telegramdesktop/tdesktop/actions)
+[![Built with Depot](https://img.shields.io/badge/Built%20with-Depot.dev-46A75A)](https://depot.dev)
 
 ## Features
 
@@ -59,106 +63,55 @@ scoop install ayugram
 
 #### Self-built
 
-Follow [official guide](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-win-x64.md) if you want to
-build by yourself.
+* Qt 6 ([LGPL](http://doc.qt.io/qt-6/lgpl.html)) and Qt 5.15 ([LGPL](http://doc.qt.io/qt-5/lgpl.html)) slightly patched
+* OpenSSL 3.2.1 ([Apache License 2.0](https://openssl-library.org/source/license/apache-license-2.0.txt))
+* WebRTC ([New BSD License](https://github.com/desktop-app/tg_owt/blob/master/LICENSE))
+* zlib ([zlib License](http://www.zlib.net/zlib_license.html))
+* LZMA SDK 9.20 ([public domain](http://www.7-zip.org/sdk.html))
+* liblzma ([public domain](http://tukaani.org/xz/))
+* Google Breakpad ([License](https://chromium.googlesource.com/breakpad/breakpad/+/master/LICENSE))
+* Google Crashpad ([Apache License 2.0](https://chromium.googlesource.com/crashpad/crashpad/+/master/LICENSE))
+* GYP ([BSD License](https://github.com/bnoordhuis/gyp/blob/master/LICENSE))
+* Ninja ([Apache License 2.0](https://github.com/ninja-build/ninja/blob/master/COPYING))
+* OpenAL Soft ([LGPL](https://github.com/kcat/openal-soft/blob/master/COPYING))
+* Opus codec ([BSD License](http://www.opus-codec.org/license/))
+* FFmpeg ([LGPL](https://www.ffmpeg.org/legal.html))
+* Guideline Support Library ([MIT License](https://github.com/Microsoft/GSL/blob/master/LICENSE))
+* Range-v3 ([Boost License](https://github.com/ericniebler/range-v3/blob/master/LICENSE.txt))
+* Open Sans font ([Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html))
+* Vazirmatn font ([SIL Open Font License 1.1](https://github.com/rastikerdar/vazirmatn/blob/master/OFL.txt))
+* Emoji alpha codes ([MIT License](https://github.com/emojione/emojione/blob/master/extras/alpha-codes/LICENSE.md))
+* xxHash ([BSD License](https://github.com/Cyan4973/xxHash/blob/dev/LICENSE))
+* QR Code generator ([MIT License](https://github.com/nayuki/QR-Code-generator#license))
+* CMake ([New BSD License](https://github.com/Kitware/CMake/blob/master/Copyright.txt))
+* Hunspell ([LGPL](https://github.com/hunspell/hunspell/blob/master/COPYING.LESSER))
+* Ada ([Apache License 2.0](https://github.com/ada-url/ada/blob/main/LICENSE-APACHE))
 
 ### macOS
 
 #### Official
 
-You can download prebuilt macOS package from [Releases tab](https://github.com/AyuGram/AyuGramDesktop/releases).
+[//]: # (LINKS)
+[telegram]: https://telegram.org
+[telegram_desktop]: https://desktop.telegram.org
+[telegram_api]: https://core.telegram.org
+[telegram_proto]: https://core.telegram.org/mtproto
+[license]: LICENSE
+[win]: docs/building-win.md
+[mac]: docs/building-mac.md
+[linux]: docs/building-linux.md
+[preview_image]: https://github.com/telegramdesktop/tdesktop/blob/dev/docs/assets/preview.png "Preview of Telegram Desktop"
+[preview_image_url]: https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/docs/assets/preview.png
 
-#### Homebrew
+## Thanks to
 
-```bash
-brew install --cask ayugram
-```
+<a href="https://depot.dev">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light.svg">
+    <img alt="Depot" src="https://depot.dev/assets/brand/1693758816/depot-logo-horizontal-on-light.svg" width="150">
+  </picture>
+</a>
 
-### Arch Linux
+CI infrastructure sponsored by [Depot](https://depot.dev) — fast GitHub Actions runners.
 
-#### From source (recommended)
-
-Install `ayugram-desktop` from [AUR](https://aur.archlinux.org/packages/ayugram-desktop).
-
-#### Prebuilt binaries
-
-Install `ayugram-desktop-bin` from [AUR](https://aur.archlinux.org/packages/ayugram-desktop-bin).
-
-Note: these binaries aren't officially maintained by us.
-
-### NixOS
-
-#### Flake (recommended)
-
-Install `ayugram-desktop` from [ndfined-crp/ayugram-desktop](https://github.com/ndfined-crp/ayugram-desktop)
-
-#### Nixpkgs
-
-Install `ayugram-desktop` from [nixpkgs](https://search.nixos.org/packages?channel=unstable&show=ayugram-desktop)
-
-### ALT Linux
-
-[Sisyphus](https://packages.altlinux.org/en/sisyphus/srpms/ayugram-desktop/)
-
-### Gentoo Linux
-
-See [this repository](https://codeberg.org/OverLessArtem/ayugram-ebuild-gentoo) for installation manual.
-
-### Void Linux
-See [this repository](https://codeberg.org/OverLessArtem/ayugram-template-void) for installation manual.
-
-### EPM
-
-`epm play ayugram`
-
-### Fedora
-
-From [RPM Fusion](https://admin.rpmfusion.org/pkgdb/package/free/ayugram-desktop/) repository.
-
-```bash
-dnf install ayugram-desktop
-```
-
-### Any other Linux distro
-
-Flatpak: https://github.com/0FL01/AyuGramDesktop-flatpak
-
-Or follow the [official guide](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-linux.md).
-
-### Remarks for Windows
-
-Make sure you have these components installed with VS Build Tools:
-
-- C++ MFC latest (x86 & x64)
-- C++ ATL latest (x86 & x64)
-- latest Windows 11 SDK
-
-## Donation
-
-Enjoy using **AyuGram**? Consider sending us a tip!
-
-[Here's available methods.](https://docs.ayugram.one/donate/)
-
-## Credits
-
-### Telegram clients
-
-- [Telegram Desktop](https://github.com/telegramdesktop/tdesktop)
-- [Kotatogram](https://github.com/kotatogram/kotatogram-desktop)
-- [64Gram](https://github.com/TDesktop-x64/tdesktop)
-- [Forkgram](https://github.com/forkgram/tdesktop)
-
-### Libraries used
-
-- [JSON for Modern C++](https://github.com/nlohmann/json)
-- [SQLite](https://github.com/sqlite/sqlite)
-- [sqlite_orm](https://github.com/fnc12/sqlite_orm)
-- [androidx sources](https://github.com/androidx/androidx)
-
-### Icons
-
-- [Solar Icon Set](https://www.figma.com/community/file/1166831539721848736)
-
-### Bots
-
-- [TelegramDB](https://t.me/tgdatabase) for username lookup by ID (until closing free inline mode at 2 April 2026)

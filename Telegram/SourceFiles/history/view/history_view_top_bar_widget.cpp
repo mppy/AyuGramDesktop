@@ -248,7 +248,12 @@ TopBarWidget::TopBarWidget(
 		| UpdateFlag::SupportInfo
 		| UpdateFlag::Rights
 		| UpdateFlag::EmojiStatus
+		| UpdateFlag::Name
 	) | rpl::on_next([=](const Data::PeerUpdate &update) {
+		if ((update.flags & UpdateFlag::Name)
+			&& (update.peer == titleNamePeer())) {
+			TopBarWidget::update();
+		}
 		if (update.flags & UpdateFlag::HasCalls) {
 			if (update.peer->isUser()
 				&& (update.peer->isSelf()
@@ -586,16 +591,7 @@ void TopBarWidget::paintTopBar(Painter &p) {
 	const auto sublist = _activeChat.key.sublist();
 	const auto topic = _activeChat.key.topic();
 	const auto history = _activeChat.key.history();
-	const auto broadcastForMonoforum = history
-		? history->peer->monoforumBroadcast()
-		: nullptr;
-	const auto namePeer = broadcastForMonoforum
-		? broadcastForMonoforum
-		: history
-		? history->peer.get()
-		: sublist
-		? sublist->sublistPeer().get()
-		: nullptr;
+	const auto namePeer = titleNamePeer();
 	if (topic && _activeChat.section == Section::Replies) {
 		p.setPen(st::dialogsNameFg);
 		topic->chatListNameText().drawElided(
@@ -682,7 +678,8 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			if (!_titleBadge.ready(info)) {
 				_titleBadge.set(
 					info,
-					namePeer->owner().customEmojiManager().factory(),
+					namePeer->owner().customEmojiManager().factory(
+						Data::CustomEmojiSizeTag::Isolated),
 					[=] { update(); });
 			}
 			const auto position = QPoint{ nameleft, nametop };
@@ -734,6 +731,21 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			paintStatus(p, statusleft, statustop, statuswidth, width());
 		}
 	}
+}
+
+PeerData *TopBarWidget::titleNamePeer() const {
+	const auto history = _activeChat.key.history();
+	const auto broadcastForMonoforum = history
+		? history->peer->monoforumBroadcast()
+		: nullptr;
+	const auto sublist = _activeChat.key.sublist();
+	return broadcastForMonoforum
+		? broadcastForMonoforum
+		: history
+		? history->peer.get()
+		: sublist
+		? sublist->sublistPeer().get()
+		: nullptr;
 }
 
 bool TopBarWidget::paintSendAction(

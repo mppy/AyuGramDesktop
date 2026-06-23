@@ -72,6 +72,8 @@ public:
 
 	QSize sizeForGroupingOptimal(int maxWidth, bool last) const override;
 	QSize sizeForGrouping(int width) const override;
+	int widenGroupingMaxWidth(int current, bool last) override;
+	int contributedMaxMonospaceWidth() const override;
 	void drawGrouped(
 		Painter &p,
 		const PaintContext &context,
@@ -147,6 +149,10 @@ private:
 		Painter &p,
 		const PaintContext &context,
 		LayoutMode mode) const;
+	void paintPlaybackBlobs(
+		Painter &p,
+		const PaintContext &context,
+		QRect inner) const;
 	[[nodiscard]] TextState cornerDownloadTextState(
 		QPoint point,
 		StateRequest request,
