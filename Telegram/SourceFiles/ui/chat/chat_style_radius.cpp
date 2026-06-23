@@ -87,7 +87,11 @@ int BubbleRadiusLarge() {
 	const auto value = EffectiveBubbleRadiusValue();
 	if (cachedValue != value) {
 		cachedValue = value;
-		cachedRadius = MapBubbleRadius(value, st::bubbleRadiusLarge);
+		cachedRadius = MapBubbleRadius(
+			value,
+			UseSmallMsgBubbleRadius.value()
+				? st::bubbleRadiusSmall
+				: st::bubbleRadiusLarge);
 	}
 	return cachedRadius;
 }
@@ -109,7 +113,11 @@ int MsgFileThumbRadiusLarge() {
 	const auto value = EffectiveBubbleRadiusValue();
 	if (cachedValue != value) {
 		cachedValue = value;
-		cachedRadius = MapBubbleRadius(value, st::msgFileThumbRadiusLarge);
+		cachedRadius = MapBubbleRadius(
+			value,
+			UseSmallMsgBubbleRadius.value()
+				? st::msgFileThumbRadiusSmall
+				: st::msgFileThumbRadiusLarge);
 	}
 	return cachedRadius;
 }

@@ -63,9 +63,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <QtGui/QGuiApplication>
 
-// AyuGram includes
-#include "ayu/features/filters/filters_controller.h"
-
 namespace {
 
 const auto kPsaForwardedPrefix = "cloud_lng_forwarded_psa_";
@@ -575,20 +572,16 @@ void HistoryMessageReply::updateData(
 		&& (asExternal || _fields.manualQuote);
 	_multiline = !_fields.storyId && (asExternal || nonEmptyQuote);
 
-	const auto filtered = resolvedMessage &&
-			!resolvedMessage.empty() &&
-			FiltersController::filtered(resolvedMessage.get());
-
 	const auto displaying = resolvedMessage
 		|| resolvedStory
 		|| ((nonEmptyQuote || _fields.externalMedia)
 			&& (!_fields.messageId || force));
-	_displaying = displaying && !filtered ? 1 : 0;
+	_displaying = displaying ? 1 : 0;
 
 	const auto unavailable = !resolvedMessage
 		&& !resolvedStory
 		&& ((!_fields.storyId && !_fields.messageId) || force);
-	_unavailable = (unavailable || filtered) ? 1 : 0;
+	_unavailable = unavailable ? 1 : 0;
 
 	if (force) {
 		if (!_displaying && (_fields.messageId || _fields.storyId)) {
@@ -750,14 +743,7 @@ QString ReplyMarkupClickHandler::copyToClipboardText() const {
 
 QString ReplyMarkupClickHandler::copyToClipboardContextItemText() const {
 	const auto button = getUrlButton();
-	if (button) {
-		using Type = HistoryMessageMarkupButton::Type;
-		if (button->type == Type::Callback) {
-			return tr::ayu_ContextCopyCallbackData(tr::now);
-		}
-		return tr::lng_context_copy_link(tr::now);
-	}
-	return QString();
+	return button ? tr::lng_context_copy_link(tr::now) : QString();
 }
 
 // Finds the corresponding button in the items markup struct.
@@ -772,8 +758,7 @@ auto ReplyMarkupClickHandler::getUrlButton() const
 -> const HistoryMessageMarkupButton* {
 	if (const auto button = getButton()) {
 		using Type = HistoryMessageMarkupButton::Type;
-		if (button->type == Type::Url || button->type == Type::Auth || button->type == Type::Callback ||
-			button->type == Type::WebView || button->type == Type::SimpleWebView) {
+		if (button->type == Type::Url || button->type == Type::Auth) {
 			return button;
 		}
 	}

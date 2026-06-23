@@ -58,11 +58,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtCore/QJsonDocument>
 #include <QtGui/QGuiApplication>
 
-// AyuGram includes
-#include "ayu/ui/settings/settings_main.h"
-#include "settings/settings_builder.h"
-
-
 namespace Settings {
 namespace {
 
@@ -71,11 +66,6 @@ const auto kOptionsClipboardPrefix = u"tdesktop-flags:"_q;
 struct DecodeOptionsResult {
 	bool ok = false;
 	QString json;
-};
-
-struct ResolvedReferrer {
-	QString controlId;
-	Type section = AyuMain::Id();
 };
 
 [[nodiscard]] QString EncodeOptionsToText(const QString &json) {
@@ -114,52 +104,8 @@ struct ResolvedReferrer {
 	return result;
 }
 
-[[nodiscard]] ResolvedReferrer ResolveReferrer(
-		const QString &controlId,
-		not_null<Main::Session*> session) {
-	const auto &registry = Builder::SearchRegistry::Instance();
-	const auto entries = registry.collectAll(session);
-	for (const auto &entry : entries) {
-		if (!entry.section) {
-			continue;
-		}
-		if (entry.id == controlId) {
-			return {
-				.controlId = entry.id,
-				.section = entry.section,
-			};
-		}
-		if (entry.altIds.contains(controlId)) {
-			return {
-				.controlId = entry.id,
-				.section = entry.section,
-			};
-		}
-	}
-	return {
-		.controlId = controlId,
-	};
-}
-
-[[nodiscard]] QString OptionReferrer(const base::options::option<bool> &option) {
-	const auto &id = option.id();
-	if (id == u"tabbed-panel-show-on-click"_q) {
-		return u"ayu/showEmojiPopup"_q;
-	} else if (id == u"show-peer-id-below-about"_q) {
-		return u"ayu/showPeerId"_q;
-	} else if (id == u"use-small-msg-bubble-radius"_q) {
-		return u"ayu/messageBubbleRadius"_q;
-	} else if (id == u"unlimited-recent-stickers"_q) {
-		return u"ayu/recentStickersCount"_q;
-	} else if (id == u"hide-ai-button"_q) {
-		return u"ayu/showAiEditorButtonInMessageField"_q;
-	}
-	return QString();
-}
-
 void AddOption(
 		not_null<Window::Controller*> window,
-		not_null<Window::SessionController*> controller,
 		not_null<Ui::VerticalLayout*> container,
 		base::options::option<bool> &option,
 		rpl::producer<> resetClicks,
@@ -262,7 +208,6 @@ void AddOption(
 
 void SetupExperimental(
 		not_null<Window::Controller*> window,
-		not_null<Window::SessionController*> controller,
 		not_null<Ui::VerticalLayout*> container,
 		rpl::producer<> reloadOptionsRequests,
 		rpl::producer<QString> query,
@@ -314,7 +259,6 @@ void SetupExperimental(
 	const auto addToggle = [&](const char name[]) {
 		AddOption(
 			window,
-			controller,
 			container,
 			base::options::lookup<bool>(name),
 			(reset
@@ -464,7 +408,6 @@ void Experimental::setupContent() {
 
 	SetupExperimental(
 		&controller()->window(),
-		controller(),
 		content,
 		_reloadOptionsRequests.events(),
 		_query.value(),

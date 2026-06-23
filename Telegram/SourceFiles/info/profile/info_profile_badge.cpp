@@ -22,10 +22,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_custom_emoji.h"
 #include "main/main_session.h"
 #include "styles/style_info.h"
-
-// AyuGram includes
 #include "styles/style_ayu_icons.h"
-
 
 namespace Info::Profile {
 namespace {
@@ -219,9 +216,9 @@ void Badge::setContent(Content content) {
 	} break;
 	case BadgeType::Extera:
 	case BadgeType::ExteraSupporter: {
-		const auto icon = (_content.badge == BadgeType::Extera
-							   ? &st::infoExteraOfficialBadge
-							   : &st::infoExteraSupporterBadge);
+		const auto icon = (_content.badge == BadgeType::Extera)
+			? &st::infoExteraOfficialBadge
+			: &st::infoExteraSupporterBadge;
 		const auto skip = st::infoVerifiedCheckPosition.x();
 		_view->resize(
 			icon->width() + skip,
@@ -230,7 +227,12 @@ void Badge::setContent(Content content) {
 		) | rpl::on_next([=, check = _view.data()]{
 			Painter p(check);
 			if (_overrideSt) {
-				icon->paint(p, skip, 0, check->width(), _overrideSt->premiumFg->c);
+				icon->paint(
+					p,
+					skip,
+					0,
+					check->width(),
+					_overrideSt->premiumFg->c);
 			} else {
 				icon->paint(p, skip, 0, check->width());
 			}

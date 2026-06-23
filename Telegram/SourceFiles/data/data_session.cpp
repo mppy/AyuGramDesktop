@@ -91,13 +91,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/random.h"
 #include "spellcheck/spellcheck_highlight_syntax.h"
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/data/messages_storage.h"
-#include "ayu/features/filters/filters_controller.h"
-#include "ayu/utils/telegram_helpers.h"
-
-
 namespace Data {
 namespace {
 
@@ -340,11 +333,7 @@ Session::Session(not_null<Main::Session*> session)
 			}
 		}, _lifetime);
 
-		// AyuGram disableStories
-		const auto &settings = AyuSettings::getInstance();
-		if (!settings.disableStories()) {
-			_stories->loadMore(Data::StorySourcesList::NotHidden);
-		}
+		_stories->loadMore(Data::StorySourcesList::NotHidden);
 	});
 
 	session->appConfig().ignoredRestrictionReasonsChanges(
@@ -913,8 +902,7 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 			| Flag::Forbidden
 			| Flag::CallActive
 			| Flag::CallNotEmpty
-			| Flag::NoForwards
-			| Flag::AyuNoForwards;
+			| Flag::NoForwards;
 		const auto flagsSet = (data.is_left() ? Flag::Left : Flag())
 			| (data.is_creator() ? Flag::Creator : Flag())
 			| (data.is_deactivated() ? Flag::Deactivated : Flag())
@@ -924,8 +912,7 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 					&& chat->groupCall()->fullCount() > 0))
 				? Flag::CallNotEmpty
 				: Flag())
-			| (data.is_noforwards() ? Flag::NoForwards : Flag())
-			| (data.is_ayuNoforwards() ? Flag::AyuNoForwards : Flag());
+			| (data.is_noforwards() ? Flag::NoForwards : Flag());
 		chat->setFlags((chat->flags() & ~flagsMask) | flagsSet);
 		chat->count = data.vparticipants_count().v;
 
@@ -1038,7 +1025,6 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 				? (Flag::Left | Flag::Creator)
 				: Flag())
 			| Flag::NoForwards
-			| Flag::AyuNoForwards
 			| Flag::JoinToWrite
 			| Flag::RequestToJoin
 			| Flag::Forum
@@ -1089,7 +1075,6 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 					| (data.is_creator() ? Flag::Creator : Flag()))
 				: Flag())
 			| (data.is_noforwards() ? Flag::NoForwards : Flag())
-			| (data.is_ayuNoforwards() ? Flag::AyuNoForwards : Flag())
 			| (data.is_join_to_send() ? Flag::JoinToWrite : Flag())
 			| (data.is_join_request() ? Flag::RequestToJoin : Flag())
 			| ((data.is_forum() && data.is_megagroup())
@@ -1176,9 +1161,7 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 		channel->setName(qs(data.vtitle()), QString());
 
 		channel->setAccessHash(data.vaccess_hash().v);
-		if (channel->userpicPhotoUnknown()) {
-			channel->setPhoto(MTP_chatPhotoEmpty());
-		}
+		channel->setPhoto(MTP_chatPhotoEmpty());
 		channel->date = 0;
 		channel->setMembersCount(0);
 
@@ -2789,29 +2772,6 @@ void Session::updateEditedMessage(const MTPMessage &data) {
 		Reactions::CheckUnknownForUnread(this, data);
 		return;
 	}
-
-	// AyuGram saveMessagesHistory
-	const auto &settings = AyuSettings::getInstance();
-	HistoryMessageEdition edit;
-
-	if (data.type() != mtpc_message) {
-		goto proceed;
-	}
-	edit = HistoryMessageEdition(_session, data.c_message());
-	if (settings.saveMessagesHistory() && !existing->isLocal() && !existing->author()->isSelf() && !edit.isEditHide) {
-		const auto msg = existing->originalText();
-
-		if (edit.textWithEntities == msg || msg.empty()) {
-			goto proceed;
-		}
-
-		AyuMessages::addEditedMessage(existing);
-	}
-
-	FiltersController::invalidate(existing);
-
-proceed:
-
 	if (existing->isLocalUpdateMedia() && data.type() == mtpc_message) {
 		updateExistingMessage(data.c_message());
 	}
@@ -2893,7 +2853,6 @@ void Session::registerMessage(not_null<HistoryItem*> item) {
 	const auto peerId = item->history()->peer->id;
 	const auto list = messagesListForInsert(peerId);
 	const auto itemId = item->id;
-
 	const auto i = list->find(itemId);
 	if (i != list->end()) {
 		LOG(("App Error: Trying to re-registerMessage()."));
@@ -2949,8 +2908,6 @@ void Session::unregisterMessageTTL(
 }
 
 void Session::checkTTLs() {
-	const auto &settings = AyuSettings::getInstance();
-
 	_ttlCheckTimer.cancel();
 	const auto now = base::unixtime::now();
 	auto expired = std::vector<not_null<HistoryItem*>>();
@@ -5193,10 +5150,7 @@ void Session::registerItemView(not_null<ViewElement*> view) {
 }
 
 void Session::unregisterItemView(not_null<ViewElement*> view) {
-	// Expects(!_heavyViewParts.contains(view));
-	if (_heavyViewParts.contains(view)) {
-		view->unloadHeavyPart(); // AyuGram: fix crash when using `saveDeletedMessages`
-	}
+	Expects(!_heavyViewParts.contains(view));
 
 	_shownSpoilers.remove(view);
 

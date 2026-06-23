@@ -37,10 +37,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <unistd.h>
 #endif // Q_OS_WIN
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-
-
 //extern "C" {
 //#include <openssl/evp.h>
 //} // extern "C"
@@ -446,8 +442,6 @@ void writeSettings() {
 
 	if (!QDir().exists(_basePath)) QDir().mkpath(_basePath);
 
-    AyuSettings::save();
-
 	// We dropped old test authorizations when migrated to multi auth.
 	//const auto name = cTestMode() ? u"settings_test"_q : u"settings"_q;
 	const auto name = u"settings"_q;
@@ -560,7 +554,7 @@ const QString &readAutoupdatePrefixRaw() {
 			return AutoupdatePrefix(value);
 		}
 	}
-	return AutoupdatePrefix("https://update.ayugram.one/");
+	return AutoupdatePrefix("https://td.telegram.org");
 }
 
 void writeAutoupdatePrefix(const QString &prefix) {
@@ -569,12 +563,11 @@ void writeAutoupdatePrefix(const QString &prefix) {
 	}
 
 	const auto current = readAutoupdatePrefixRaw();
-    const auto fixedPrefix = QString::fromStdString("https://update.ayugram.one/");
-	if (current != fixedPrefix) {
-		AutoupdatePrefix(fixedPrefix);
+	if (current != prefix) {
+		AutoupdatePrefix(prefix);
 		QFile f(autoupdatePrefixFile());
 		if (f.open(QIODevice::WriteOnly)) {
-			f.write(fixedPrefix.toUtf8());
+			f.write(prefix.toUtf8());
 			f.close();
 		}
 		if (cAutoUpdate()) {

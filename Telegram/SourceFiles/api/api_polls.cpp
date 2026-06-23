@@ -210,11 +210,6 @@ void ShowVoteRestrictionToast(
 
 } // namespace
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/utils/telegram_helpers.h"
-
-
 namespace Api {
 
 Polls::Polls(not_null<ApiWrap*> api)

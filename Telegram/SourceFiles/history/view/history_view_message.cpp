@@ -66,13 +66,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_iv.h"
 #include "styles/style_polls.h"
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/features/filters/filters_controller.h"
-#include "ayu/features/message_shot/message_shot.h"
-#include "styles/style_ayu_icons.h"
-
-
 namespace HistoryView {
 namespace {
 
@@ -447,24 +440,6 @@ struct BadgePillGeometry {
 		.width = std::max(contentWidth, height),
 		.height = height,
 	};
-}
-
-[[nodiscard]] int ComputeRightBadgeWidth(
-		not_null<const RightBadge*> badge) {
-	const auto boostWidth = badge->boosts.isEmpty()
-		? 0
-		: (st::msgTagBadgeBoostSkip + badge->boosts.maxWidth());
-	if (badge->role == BadgeRole::User) {
-		const auto tagWidth = (badge->channel
-				&& AyuSettings::getInstance().replaceBottomInfoWithIcons())
-			? st::inChannelBadgeIcon.width()
-			: badge->tag.isEmpty()
-			? 0
-			: badge->tag.maxWidth();
-		return tagWidth + boostWidth;
-	}
-	const auto pill = ComputeBadgePillGeometry(badge);
-	return pill.width + boostWidth;
 }
 
 } // namespace
@@ -993,34 +968,13 @@ void Message::refreshRightBadge() {
 	if (const auto badge = Get<RightBadge>(); badge && badge->overridden) {
 		return;
 	}
-	if (hasOutLayout() && !AyuFeatures::MessageShot::isTakingShot()) {
-		if (Has<RightBadge>()) {
-			RemoveComponents(RightBadge::Bit());
-		}
-		return;
-	}
-	if (AyuFeatures::MessageShot::ignoreRender(
-			AyuFeatures::MessageShot::RenderPart::HeaderDecorations)) {
+	if (hasOutLayout()) {
 		if (Has<RightBadge>()) {
 			RemoveComponents(RightBadge::Bit());
 		}
 		return;
 	}
 	const auto item = data();
-	const auto drawChannelBadge = [&] {
-		if (item->isDiscussionPost()) {
-			return (delegate()->elementContext() != Context::Replies);
-		} else if (item->author()->isMegagroup()) {
-			if (const auto msgsigned = item->Get<HistoryMessageSigned>()) {
-				if (!msgsigned->viaBusinessBot) {
-					return false;
-				}
-			}
-		}
-		return item->history()->peer->isMegagroup()
-			&& item->author()->isChannel()
-			&& !item->out();
-	}();
 	const auto [text, role, special] = [&]() -> std::tuple<QString, BadgeRole, bool> {
 		if (item->isDiscussionPost()) {
 			return {
@@ -1028,7 +982,7 @@ void Message::refreshRightBadge() {
 					? QString()
 					: tr::lng_channel_badge(tr::now),
 				BadgeRole::User,
-				drawChannelBadge,
+				true,
 			};
 		} else if (item->author()->isMegagroup()) {
 			if (const auto msgsigned = item->Get<HistoryMessageSigned>()) {
@@ -1037,12 +991,6 @@ void Message::refreshRightBadge() {
 					return { msgsigned->author, BadgeRole::User, false };
 				}
 			}
-		} else if (drawChannelBadge) {
-			return {
-				tr::lng_channel_badge(tr::now),
-				BadgeRole::User,
-				true,
-			};
 		}
 		const auto channel = item->history()->peer->asMegagroup();
 		const auto user = item->author()->asUser();
@@ -1110,7 +1058,6 @@ void Message::refreshRightBadge() {
 	const auto badge = Get<RightBadge>();
 	badge->role = role;
 	badge->special = special || (text.isEmpty() && !tagText.empty());
-	badge->channel = drawChannelBadge;
 	badge->tagLink = nullptr;
 	badge->ripple = nullptr;
 	if (tagText.empty()) {
@@ -1134,12 +1081,30 @@ void Message::refreshRightBadge() {
 	} else {
 		badge->boosts.clear();
 	}
-	badge->width = ComputeRightBadgeWidth(badge);
+	const auto boostWidth = badge->boosts.isEmpty()
+		? 0
+		: (st::msgTagBadgeBoostSkip + badge->boosts.maxWidth());
+	if (badge->role == BadgeRole::User) {
+		const auto tagWidth = badge->tag.isEmpty()
+			? 0
+			: badge->tag.maxWidth();
+		badge->width = tagWidth + boostWidth;
+	} else {
+		const auto &padding = st::msgTagBadgePadding;
+		const auto textWidth = badge->tag.maxWidth();
+		const auto contentWidth = padding.left()
+			+ textWidth
+			+ padding.right();
+		const auto pillHeight = padding.top()
+			+ st::msgFont->height
+			+ padding.bottom();
+		badge->width = std::max(contentWidth, pillHeight) + boostWidth;
+	}
 }
 
 int Message::rightBadgeWidth() const {
 	const auto badge = Get<RightBadge>();
-	return badge ? ComputeRightBadgeWidth(badge) : 0;
+	return badge ? badge->width : 0;
 }
 
 void Message::applyGroupAdminChanges(
@@ -1656,15 +1621,13 @@ int Message::marginTop() const {
 	}
 	result += displayedDateHeight();
 	if (const auto bar = Get<UnreadBar>()) {
-		if (!AyuFeatures::MessageShot::isTakingShot()) {
-			result += bar->height();
-		}
+		result += bar->height();
 	}
 	if (const auto bar = Get<ForumThreadBar>()) {
 		result += bar->height();
 	}
 	if (const auto service = Get<ServicePreMessage>()) {
-		if (!service->below && !AyuFeatures::MessageShot::isTakingShot()) {
+		if (!service->below) {
 			result += service->height;
 		}
 	}
@@ -1752,7 +1715,7 @@ void Message::draw(Painter &p, const PaintContext &context) const {
 	auto mediaOnBottom = (mediaDisplayed && media->isBubbleBottom()) || check || (entry/* && entry->isBubbleBottom()*/);
 	auto mediaOnTop = (mediaDisplayed && media->isBubbleTop()) || (entry && entry->isBubbleTop());
 
-	const auto displayInfo = needInfoDisplay() && !AyuFeatures::MessageShot::ignoreRender(AyuFeatures::MessageShot::RenderPart::Date);
+	const auto displayInfo = needInfoDisplay();
 	const auto reactionsInBubble = _reactions && embedReactionsInBubble();
 
 	// We need to count geometry without keyboard and reactions
@@ -1814,12 +1777,6 @@ void Message::draw(Painter &p, const PaintContext &context) const {
 		if (selectionTranslation) {
 			p.translate(selectionTranslation, 0);
 		}
-	}
-
-	const auto deletedFade = deletedOpacity();
-	const auto savedOpacityForDeleted = p.opacity();
-	if (deletedFade < 1.) {
-		p.setOpacity(savedOpacityForDeleted * deletedFade);
 	}
 
 	const auto roll = media ? media->bubbleRoll() : Media::BubbleRoll();
@@ -2154,10 +2111,6 @@ void Message::draw(Painter &p, const PaintContext &context) const {
 
 	p.restoreTextPalette();
 
-	if (deletedFade < 1.) {
-		p.setOpacity(savedOpacityForDeleted);
-	}
-
 	if (context.highlightPathCache
 		&& !context.highlightPathCache->isEmpty()) {
 		const auto alpha = int(0.25
@@ -2321,10 +2274,6 @@ void Message::paintCommentsButton(
 		Painter &p,
 		QRect &g,
 		const PaintContext &context) const {
-	if (AyuFeatures::MessageShot::isTakingShot()) {
-		return;
-	}
-
 	if (!data()->repliesAreComments() && !data()->externalReply()) {
 		return;
 	}
@@ -2341,8 +2290,7 @@ void Message::paintCommentsButton(
 	auto width = g.width();
 
 	if (_comments->ripple) {
-		const auto was = p.opacity(); // for semi-transparent deleted messages
-		p.setOpacity(was * st::historyPollRippleOpacity);
+		p.setOpacity(st::historyPollRippleOpacity);
 		const auto colorOverride = &stm->msgWaveformInactive->c;
 		_comments->ripple->paint(
 			p,
@@ -2353,7 +2301,7 @@ void Message::paintCommentsButton(
 		if (_comments->ripple->empty()) {
 			_comments->ripple.reset();
 		}
-		p.setOpacity(was);
+		p.setOpacity(1.);
 	}
 
 	left += st::historyCommentsSkipLeft;
@@ -2377,28 +2325,7 @@ void Message::paintCommentsButton(
 	} else {
 		auto &list = _comments->userpics;
 		const auto limit = HistoryMessageViews::kMaxRecentRepliers;
-		auto filteredRepliers = std::vector<PeerId>();
-		filteredRepliers.reserve(std::min(int(views->recentRepliers.size()), limit));
-		for (const auto peerId : views->recentRepliers) {
-			const auto peer = history()->owner().peer(peerId);
-			if (!peer || FiltersController::isBlocked(peer)) {
-				continue;
-			}
-			filteredRepliers.push_back(peerId);
-			if (filteredRepliers.size() == limit) {
-				break;
-			}
-		}
-		const auto count = int(filteredRepliers.size());
-		if (!count) {
-			const auto &icon = stm->historyComments;
-			icon.paint(
-				p,
-				left,
-				top + (st::historyCommentsButtonHeight - icon.height()) / 2,
-				width);
-			left += icon.width();
-		} else {
+		const auto count = std::min(int(views->recentRepliers.size()), limit);
 		const auto single = st::historyCommentsUserpics.size;
 		const auto shift = st::historyCommentsUserpics.shift;
 		const auto regenerate = [&] {
@@ -2410,7 +2337,7 @@ void Message::paintCommentsButton(
 				const auto peer = entry.peer;
 				auto &view = entry.view;
 				const auto wasView = view.cloud.get();
-				if (filteredRepliers[i] != peer->id
+				if (views->recentRepliers[i] != peer->id
 					|| peer->userpicUniqueKey(view) != entry.uniqueKey
 					|| view.cloud.get() != wasView) {
 					return true;
@@ -2420,7 +2347,7 @@ void Message::paintCommentsButton(
 		}();
 		if (regenerate) {
 			for (auto i = 0; i != count; ++i) {
-				const auto peerId = filteredRepliers[i];
+				const auto peerId = views->recentRepliers[i];
 				if (i == list.size()) {
 					list.push_back(UserpicInRow{
 						history()->owner().peer(peerId)
@@ -2443,7 +2370,6 @@ void Message::paintCommentsButton(
 			top + (st::historyCommentsButtonHeight - single) / 2,
 			_comments->cachedUserpics);
 		left += single + (count - 1) * (single - shift);
-		}
 	}
 
 	left += st::historyCommentsSkipText;
@@ -2499,9 +2425,7 @@ void Message::paintFromName(
 		}
 		return &info->nameText();
 	}();
-	const auto &settings = AyuSettings::getInstance();
-	const auto hidePremiumStatuses = settings.hidePremiumStatuses();
-	const auto statusWidth = _fromNameStatus && !hidePremiumStatuses
+	const auto statusWidth = _fromNameStatus
 		? st::dialogsPremiumIcon.icon.width()
 		: 0;
 	const auto nameAvailableWidth = (statusWidth && availableWidth > statusWidth)
@@ -2570,7 +2494,7 @@ void Message::paintFromName(
 		.elisionLines = 1,
 	});
 	const auto skipWidth = nameText->maxWidth()
-		+ (_fromNameStatus && !hidePremiumStatuses
+		+ (_fromNameStatus
 			? (st::dialogsPremiumIcon.icon.width()
 				+ st::msgServiceFont->spacew)
 			: 0)
@@ -2615,18 +2539,8 @@ void Message::paintFromName(
 				: st::rankUserFg->c;
 			const auto badgeLeft = trect.left()
 				+ trect.width()
-				- badgeWidth;
-			if (badge->channel
-				&& AyuSettings::getInstance().replaceBottomInfoWithIcons()) {
-				const auto badgeTop = trect.top()
-					+ (st::msgNameFont->height
-						- stm->channelBadgeIcon.height()) / 2;
-				stm->channelBadgeIcon.paint(
-					p,
-					badgeLeft,
-					badgeTop,
-					width());
-			} else if (badge->role != BadgeRole::User) {
+				- badge->width;
+			if (badge->role != BadgeRole::User) {
 				auto bgColor = badgeColor;
 				bgColor.setAlphaF(0.15);
 				const auto pill = ComputeBadgePillGeometry(badge);
@@ -2641,7 +2555,7 @@ void Message::paintFromName(
 				p.setPen(Qt::NoPen);
 				p.setBrush(bgColor);
 				{
-				auto hq = PainterHighQualityEnabler(p);
+					auto hq = PainterHighQualityEnabler(p);
 					p.drawRoundedRect(
 						pillRect,
 						pill.height / 2.,
@@ -3514,15 +3428,7 @@ BottomRippleMask Message::bottomRippleMask(int buttonHeight) const {
 	const auto buttonWidth = g.width();
 	const auto &large = CachedCornersMasks(Radius::BubbleLarge);
 	const auto &small = CachedCornersMasks(Radius::BubbleSmall);
-	auto rounding = countBubbleRounding();
-	if (AyuSettings::getInstance().removeMessageTail()) {
-		if (rounding.bottomLeft == Corner::Tail) {
-			rounding.bottomLeft = Corner::Large;
-		}
-		if (rounding.bottomRight == Corner::Tail) {
-			rounding.bottomRight = Corner::Large;
-		}
-	}
+	const auto rounding = countBubbleRounding();
 	const auto icon = (rounding.bottomLeft == Corner::Tail)
 		? &st::historyBubbleTailInLeft
 		: (rounding.bottomRight == Corner::Tail)
@@ -5697,7 +5603,9 @@ bool Message::unwrapped() const {
 		return false;
 	}
 	const auto media = this->media();
-	return media == nullptr && item->isEmpty();
+	return media
+		? (!hasVisibleText() && media->unwrapped())
+		: item->isEmpty();
 }
 
 int Message::minWidthForMedia() const {
@@ -5777,10 +5685,6 @@ bool Message::displayRightActionComments() const {
 }
 
 std::optional<QSize> Message::rightActionSize() const {
-	if (AyuFeatures::MessageShot::isTakingShot()) {
-		return {};
-	}
-
 	if (displayRightActionComments()) {
 		const auto views = data()->Get<HistoryMessageViews>();
 		Assert(views != nullptr);
@@ -5802,11 +5706,6 @@ std::optional<QSize> Message::rightActionSize() const {
 }
 
 bool Message::displayFastShare() const {
-	const auto &settings = AyuSettings::getInstance();
-	if (settings.hideFastShare()) {
-		return false;
-	}
-
 	const auto item = data();
 	const auto peer = item->history()->peer;
 	if (!item->allowsForward()) {
@@ -6616,9 +6515,7 @@ int Message::resizeContentGetHeight(int newWidth) {
 		}
 
 		if (item->repliesAreComments() || item->externalReply()) {
-			if (!AyuFeatures::MessageShot::isTakingShot()) {
-				newHeight += st::historyCommentsButtonHeight;
-			}
+			newHeight += st::historyCommentsButtonHeight;
 		} else if (_comments) {
 			_comments = nullptr;
 			checkHeavyPart();

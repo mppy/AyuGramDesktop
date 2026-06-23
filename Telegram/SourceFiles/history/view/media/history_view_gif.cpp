@@ -65,10 +65,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QSvgRenderer>
 #include <QtWidgets/QApplication>
 
-// AyuGram includes
-#include "ayu/features/message_shot/message_shot.h"
-
-
 namespace HistoryView {
 namespace {
 
@@ -105,10 +101,10 @@ using ::Media::ValidFrameSize;
 		const auto centerRect = r - centerMargins;
 		const auto &icon = context.imageStyle()->historyVideoMessageTtlIcon;
 		const auto iconRect = QRect(
-			rect::right(centerRect) - icon.width() * 1.2,
-			rect::bottom(centerRect) - icon.height() * 1.2,
-			icon.width() / 3,
-			icon.height() / 3);
+			rect::right(centerRect) - icon.width() * 0.75,
+			rect::bottom(centerRect) - icon.height() * 0.75,
+			icon.width(),
+			icon.height());
 		{
 			auto hq = PainterHighQualityEnabler(p);
 			auto path = QPainterPath();
@@ -681,7 +677,7 @@ void Gif::draw(Painter &p, const PaintContext &context) const {
 		&& (radial
 			|| (!streamingMode
 				&& ((!loaded && !_data->loading()) || !autoplay)));
-	if (paintInCenter && !AyuFeatures::MessageShot::isTakingShot()) {
+	if (paintInCenter) {
 		const auto radialRevealed = 1.;
 		const auto opacity = (item->isSending() || _data->uploading())
 			? 1.
@@ -754,7 +750,7 @@ void Gif::draw(Painter &p, const PaintContext &context) const {
 			return spoilerTagBackground();
 		});
 	}
-	if (displayMute && !AyuFeatures::MessageShot::isTakingShot()) {
+	if (displayMute) {
 		auto muteRect = style::rtlrect(rthumb.x() + (rthumb.width() - st::historyVideoMessageMuteSize) / 2, rthumb.y() + st::msgDateImgDelta, st::historyVideoMessageMuteSize, st::historyVideoMessageMuteSize, width());
 		p.setPen(Qt::NoPen);
 		p.setBrush(sti->msgDateImgBg);
@@ -770,14 +766,14 @@ void Gif::draw(Painter &p, const PaintContext &context) const {
 		drawPurchasedTag(p, rthumb, context);
 	}
 
-	if (!unwrapped && !skipDrawingSurrounding && !AyuFeatures::MessageShot::ignoreRender(AyuFeatures::MessageShot::RenderPart::Date)) {
+	if (!unwrapped && !skipDrawingSurrounding) {
 		const auto sponsoredSkip = !_data->isVideoFile()
 			&& _realParent->isSponsored();
 		if ((!isRound || !inWebPage) && !sponsoredSkip) {
 			drawCornerStatus(p, context, QPoint());
 		}
 	} else if (!skipDrawingSurrounding) {
-		if (isRound && !AyuFeatures::MessageShot::ignoreRender(AyuFeatures::MessageShot::RenderPart::Date)) {
+		if (isRound) {
 			const auto mediaUnread = item->hasUnreadMediaFlag();
 			const auto statusText = _seeking
 				? Ui::FormatDurationText(1 + int64(base::SafeRound(
@@ -859,7 +855,7 @@ void Gif::draw(Painter &p, const PaintContext &context) const {
 			}
 		}
 	}
-	if (!inWebPage && !skipDrawingSurrounding && !AyuFeatures::MessageShot::ignoreRender(AyuFeatures::MessageShot::RenderPart::Date)) {
+	if (!inWebPage && !skipDrawingSurrounding) {
 		auto fullRight = paintx + usex + usew;
 		auto fullBottom = painty + painth;
 		auto maxRight = _parent->width() - st::msgMargin.left();
@@ -1235,7 +1231,7 @@ void Gif::drawCornerStatus(
 	const auto padding = st::msgDateImgPadding;
 	const auto radial = _animation && _animation->radial.animating();
 	const auto cornerDownload = downloadInCorner() && !dataLoaded() && !_data->loadedInMediaCache();
-	const auto cornerMute = _streamed && _data->isVideoFile() && !cornerDownload && !AyuFeatures::MessageShot::isTakingShot();
+	const auto cornerMute = _streamed && _data->isVideoFile() && !cornerDownload;
 	const auto addLeft = cornerDownload ? (st::historyVideoDownloadSize + 2 * padding.y()) : 0;
 	const auto addRight = cornerMute ? st::historyVideoMuteSize : 0;
 	const auto downloadWidth = cornerDownload ? st::normalFont->width(_downloadSize) : 0;
@@ -1249,7 +1245,7 @@ void Gif::drawCornerStatus(
 	p.setFont(st::normalFont);
 	p.setPen(st->msgDateImgFg());
 	p.drawTextLeft(statusX + addLeft, statusTextTop, width(), text, statusW - 2 * padding.x());
-	if (cornerDownload && !AyuFeatures::MessageShot::isTakingShot()) {
+	if (cornerDownload) {
 		const auto downloadTextTop = statusY + st::normalFont->height + (2 * (statusH - 2 * st::normalFont->height) / 3) - padding.y();
 		p.drawTextLeft(statusX + addLeft, downloadTextTop, width(), _downloadSize, statusW - 2 * padding.x());
 		const auto inner = QRect(statusX + padding.y() - padding.x(), statusY, st::historyVideoDownloadSize, st::historyVideoDownloadSize);
@@ -1706,7 +1702,7 @@ void Gif::drawGrouped(
 		&& (radial
 			|| (!streamingMode
 				&& ((!loaded && !_data->loading()) || !autoplay)));
-	if (paintInCenter && !AyuFeatures::MessageShot::isTakingShot()) {
+	if (paintInCenter) {
 		const auto radialRevealed = 1.;
 		const auto opacity = (item->isSending() || _data->uploading())
 			? 1.
@@ -1885,12 +1881,6 @@ bool Gif::uploading() const {
 void Gif::hideSpoilers() {
 	if (_spoiler) {
 		_spoiler->revealed = false;
-	}
-}
-
-void Gif::revealSpoilers() {
-	if (_spoiler) {
-		_spoiler->revealed = true;
 	}
 }
 
@@ -2407,10 +2397,6 @@ bool Gif::needInfoDisplay() const {
 }
 
 bool Gif::needCornerStatusDisplay() const {
-	if (AyuFeatures::MessageShot::ignoreRender(AyuFeatures::MessageShot::RenderPart::Date)) {
-		return false;
-	}
-
 	return _data->isVideoFile()
 		|| needInfoDisplay();
 }

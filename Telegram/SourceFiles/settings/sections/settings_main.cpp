@@ -88,11 +88,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QGuiApplication>
 #include <QtGui/QWindow>
 
-// AyuGram includes
 #include "ayu/ui/settings/settings_main.h"
 #include "ayu/ui/utils/ayu_profile_values.h"
 #include "ayu/utils/telegram_helpers.h"
-
 
 namespace Settings {
 namespace {
@@ -171,7 +169,9 @@ Cover::Cover(
 			Window::GifPauseReason::Layer);
 	},
 	0, // customStatusLoopsLimit
-	Info::Profile::BadgeType::Extera | Info::Profile::BadgeType::ExteraSupporter | Info::Profile::BadgeType::ExteraCustom)
+	Info::Profile::BadgeType::Extera
+		| Info::Profile::BadgeType::ExteraSupporter
+		| Info::Profile::BadgeType::ExteraCustom)
 , _userpic(
 	this,
 	controller,
@@ -192,8 +192,8 @@ Cover::Cover(
 	const auto hook = [=](Ui::FlatLabel::ContextMenuRequest request) {
 		if (request.selection.empty()) {
 			const auto callback = [=] {
-				Info::Profile::CopyPhoneToClipboard(
-					Info::Profile::PhoneValue(_user));
+				const auto id = IDString(_user);
+				TextUtilities::SetClipboardText({ id });
 			};
 			request.menu->addAction(
 				tr::ayu_ContextCopyID(tr::now),
@@ -202,7 +202,6 @@ Cover::Cover(
 		} else {
 			_id->fillContextMenu(request);
 		}
-		Info::Profile::AddPhoneSpoilerMenu(request.menu, _user);
 	};
 	_id->setContextMenuHook(hook);
 
@@ -291,11 +290,6 @@ void Cover::initViewers() {
 		updateIdText();
 	}, lifetime());
 
-	_user->session().settings().phoneNumberHiddenValue(
-	) | rpl::on_next([=] {
-		updatePhoneText();
-	}, lifetime());
-
 	Info::Profile::UsernameValue(
 		_user
 	) | rpl::on_next([=](const TextWithEntities &value) {
@@ -344,8 +338,8 @@ void Cover::refreshNameGeometry(int newWidth) {
 	_badge.move(badgeLeft, badgeTop, badgeBottom);
 	const auto exteraBadgeLeft = badgeLeft
 		+ (_badge.widget()
-			   ? (_badge.widget()->width() + st::infoVerifiedCheckPosition.x())
-			   : 0);
+			? (_badge.widget()->width() + st::infoVerifiedCheckPosition.x())
+			: 0);
 	_exteraBadge.move(exteraBadgeLeft, badgeTop, badgeBottom);
 }
 

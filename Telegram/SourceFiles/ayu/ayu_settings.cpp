@@ -403,7 +403,8 @@ void AyuSettings::load() {
 		LOG(("AyuGramSettings: failed to read settings file (not json-like)"));
 	}
 
-	if (cGhost()) {
+	const auto legacyGhostMode = false;
+	if (legacyGhostMode) {
 		auto &ghost = AyuSettings::ghost();
 		ghost._sendReadMessages = false;
 		ghost._sendReadStories = false;

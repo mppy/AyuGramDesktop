@@ -84,9 +84,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_widgets.h"
 #include "styles/style_window.h"
 
-// AyuGram includes
-#include "ayu/ui/ayu_userpic.h"
-
 
 namespace HistoryView {
 namespace {
@@ -3452,7 +3449,7 @@ void Poll::Header::paintRecentVoters(
 			p.setPen(pen);
 			p.setBrush(Qt::NoBrush);
 			PainterHighQualityEnabler hq(p);
-			AyuUserpic::PaintShape(p, x, y, size);
+			p.drawEllipse(x, y, size, size);
 		};
 		if (_owner->usesBubblePattern(context)) {
 			const auto add = st::lineWidth * 2;

@@ -121,14 +121,12 @@ public:
 		int left,
 		int width,
 		const Ui::Text::String &text,
-		const QRect &textRect,
-		int lastLineWidthAdd = 0);
+		const QRect &textRect);
 
 private:
 	static std::vector<int> CountLineWidths(
 		const Ui::Text::String &text,
-		const QRect &textRect,
-		int lastLineWidthAdd = 0);
+		const QRect &textRect);
 
 };
 

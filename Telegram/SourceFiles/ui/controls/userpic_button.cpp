@@ -60,10 +60,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QClipboard>
 #include <QtGui/QGuiApplication>
 
-// AyuGram includes
-#include "ayu/ui/ayu_userpic.h"
-
-
 namespace Ui {
 namespace {
 
@@ -151,7 +147,7 @@ void SetupSubButtonBackground(
 		auto hq = PainterHighQualityEnabler(p);
 		p.setBrush(st::boxBg);
 		p.setPen(Qt::NoPen);
-		AyuUserpic::PaintShape(p, QRectF(background->rect()));
+		p.drawEllipse(background->rect());
 	}, background->lifetime());
 
 	upload->positionValue(
@@ -710,14 +706,7 @@ void UserpicButton::paintUserpicFrame(Painter &p, QPoint photoPosition) {
 		auto size = QSize{ _st.photoSize, _st.photoSize };
 		const auto ratio = style::DevicePixelRatio();
 		request.outer = request.resize = size * ratio;
-		const auto ayuOverride = AyuUserpic::ShouldOverrideShape(_shape);
-		if (ayuOverride) {
-			AyuUserpic::ApplyFrameRounding(
-				request,
-				_roundingCorners,
-				_ellipseMask,
-				size);
-		} else if (_shape == PeerUserpicShape::Monoforum) {
+		if (_shape == PeerUserpicShape::Monoforum) {
 		} else if (useForumShape()) {
 			const auto radius = int(_st.photoSize
 				* Ui::ForumUserpicRadiusMultiplier());
@@ -1118,11 +1107,7 @@ void UserpicButton::showCustom(QImage &&image) {
 			size * style::DevicePixelRatio(),
 			Qt::IgnoreAspectRatio,
 			Qt::SmoothTransformation);
-		const auto ayuOverride = AyuUserpic::ShouldOverrideShape(_shape);
-		_userpic = Ui::PixmapFromImage(
-			ayuOverride
-			? Images::Round(std::move(small), ImageRoundRadius::AyuUserpic)
-			: useForumShape()
+		_userpic = Ui::PixmapFromImage(useForumShape()
 			? Images::Round(
 				std::move(small),
 				Images::CornersMask(_st.photoSize
@@ -1210,10 +1195,7 @@ void UserpicButton::fillShape(QPainter &p, QBrush brush) const {
 	p.setPen(Qt::NoPen);
 	p.setBrush(brush);
 	const auto size = _st.photoSize;
-	const auto ayuOverride = AyuUserpic::ShouldOverrideShape(_shape);
-	if (ayuOverride) {
-		AyuUserpic::PaintShape(p, 0, 0, size);
-	} else if (useForumShape()) {
+	if (useForumShape()) {
 		const auto radius = size * Ui::ForumUserpicRadiusMultiplier();
 		p.drawRoundedRect(0, 0, size, size, radius, radius);
 	} else {
@@ -1249,19 +1231,12 @@ void UserpicButton::prepareUserpicPixmap() {
 						QSize(size, size) * ratio,
 						Qt::IgnoreAspectRatio,
 						Qt::SmoothTransformation);
-					const auto ayuNP = AyuUserpic::ShouldOverrideShape(_shape);
-					if (ayuNP) {
-						image = Images::Round(
-							std::move(image),
-							ImageRoundRadius::AyuUserpic);
-					} else if (useForumShape()) {
-						image = Images::Round(
+					image = useForumShape()
+						? Images::Round(
 							std::move(image),
 							Images::CornersMask(size
-								* Ui::ForumUserpicRadiusMultiplier()));
-					} else {
-						image = Images::Circle(std::move(image));
-					}
+								* Ui::ForumUserpicRadiusMultiplier()))
+						: Images::Circle(std::move(image));
 					image.setDevicePixelRatio(style::DevicePixelRatio());
 					p.drawImage(0, 0, image);
 				}

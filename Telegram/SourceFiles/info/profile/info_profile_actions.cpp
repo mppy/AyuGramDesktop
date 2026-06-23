@@ -112,15 +112,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 
-// AyuGram includes
-#include "ayu/ui/utils/ayu_profile_values.h"
-#include "ayu/utils/telegram_helpers.h"
-#include "base/event_filter.h"
-#include "styles/style_ayu_styles.h"
-#include "ui/widgets/tooltip.h"
-#include "ui/text/text_entity.h"
-
-
 namespace Info {
 namespace Profile {
 namespace {
@@ -248,7 +239,11 @@ base::options::toggle ShowChannelJoinedBelowAbout({
 			if (const auto channel = peer->asChannel()) {
 				if (!channel->amCreator() && channel->inviteDate) {
 					if (!value.empty()) {
-						value.append("\n\n");
+						if (ShowPeerIdBelowAbout.value()) {
+							value.append("\n");
+						} else {
+							value.append("\n\n");
+						}
 					}
 					using namespace Ui::Text;
 					value.append((channel->isMegagroup()
@@ -691,7 +686,6 @@ void SetupAboutPeerIdDrag(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 			inner,
 			object_ptr<Ui::VerticalLayout>(inner)));
-	other->ease = anim::easeOutCubic;
 	other->toggleOn(state->expanded.value(), anim::type::normal);
 	constexpr auto kSlideDuration = float64(st::slideWrapDuration);
 	other->setDuration(kSlideDuration);
@@ -707,7 +701,7 @@ void SetupAboutPeerIdDrag(
 		timingArrow->paintRequest() | rpl::on_next([=] {
 			auto p = QPainter(timingArrow);
 			const auto progress = other->animating()
-				? anim::easeOutCubic(1., (crl::now() - arrowAnimation->started()) / kSlideDuration)
+				? (crl::now() - arrowAnimation->started()) / kSlideDuration
 				: 1.;
 
 			const auto path = Ui::ToggleUpDownArrowPath(
@@ -1750,34 +1744,6 @@ Section DetailsFiller::makeInfo() {
 				QString()
 			).text->setLinksTrusted();
 		}
-
-		{
-			const auto dataCenter = getPeerDC(_peer);
-			const auto idLabel = dataCenter.isEmpty() ? QString("ID") : dataCenter;
-
-			auto idDrawableText = IDValue(
-				user
-			) | rpl::map([](TextWithEntities &&text)
-			{
-				return Ui::Text::Code(text.text);
-			});
-			auto idInfo = addInfoOneLine(
-				rpl::single(idLabel),
-				std::move(idDrawableText),
-				tr::ayu_ContextCopyID(tr::now)
-			);
-
-			idInfo.text->setClickHandlerFilter([=](auto &&...)
-			{
-				const auto idText = IDString(user);
-				if (!idText.isEmpty()) {
-					QGuiApplication::clipboard()->setText(idText);
-					controller->showToast(tr::ayu_IDCopiedToast(tr::now));
-				}
-				return false;
-			});
-			AddRegistrationOrCreationButton(controller, _peer, idInfo, fitLabelToButton);
-		}
 	} else {
 		const auto topicRootId = _topic ? _topic->rootId() : 0;
 		const auto addToLink = topicRootId
@@ -1842,37 +1808,6 @@ Section DetailsFiller::makeInfo() {
 			});
 		}
 
-		const auto hook = [=](Ui::FlatLabel::ContextMenuRequest request)
-		{
-			if (!request.link) {
-				return;
-			}
-			const auto text = request.link->copyToClipboardContextItemText();
-			if (text.isEmpty()) {
-				return;
-			}
-			const auto link = request.link->copyToClipboardText();
-			request.menu->addAction(
-				text,
-				[=] { QGuiApplication::clipboard()->setText(link); });
-			const auto last = link.lastIndexOf('/');
-			if (last < 0) {
-				return;
-			}
-			const auto mention = '@' + link.mid(last + 1);
-			if (mention.size() < 2) {
-				return;
-			}
-			request.menu->addAction(
-				tr::lng_context_copy_mention(tr::now),
-				[=] { QGuiApplication::clipboard()->setText(mention); });
-		};
-
-		if (!_topic) {
-			linkLine.text->setContextMenuHook(hook);
-			linkLine.subtext->setContextMenuHook(hook);
-		}
-
 		if (const auto channel = _topic ? nullptr : _peer->asChannel()) {
 			auto locationText = LocationValue(
 				channel
@@ -1896,58 +1831,6 @@ Section DetailsFiller::makeInfo() {
 		if (!_topic) {
 			addTranslateToMenu(about.text, AboutWithAdvancedValue(_peer));
 			SetupAboutPeerIdDrag(about.text, _peer);
-		}
-
-		if (!_topic) {
-			const auto dataCenter = getPeerDC(_peer);
-			const auto idLabel = dataCenter.isEmpty() ? QString("ID") : dataCenter;
-
-			auto idDrawableText = IDValue(
-				_peer
-			) | rpl::map([](TextWithEntities &&text)
-			{
-				return Ui::Text::Code(text.text);
-			});
-			auto idInfo = addInfoOneLine(
-				idLabel,
-				std::move(idDrawableText),
-				tr::ayu_ContextCopyID(tr::now)
-			);
-
-			idInfo.text->setClickHandlerFilter([=, peer = _peer](auto &&...)
-			{
-				const auto idText = IDString(peer);
-				if (!idText.isEmpty()) {
-					QGuiApplication::clipboard()->setText(idText);
-					controller->showToast(tr::ayu_IDCopiedToast(tr::now));
-				}
-				return false;
-			});
-			AddRegistrationOrCreationButton(controller, _peer, idInfo, fitLabelToButton);
-		}
-
-		if (_topic) {
-			auto idDrawableText = IDValue(
-				_peer->forumTopicFor(topicRootId)->topicRootId()
-			) | rpl::map([](TextWithEntities &&text)
-			{
-				return Ui::Text::Code(text.text);
-			});
-			auto idInfo = addInfoOneLine(
-				rpl::single(QString("ID")),
-				std::move(idDrawableText),
-				tr::ayu_ContextCopyID(tr::now)
-			);
-
-			idInfo.text->setClickHandlerFilter([=, peer = _peer](auto &&...)
-			{
-				const auto idText = IDString(peer->forumTopicFor(topicRootId)->topicRootId());
-				if (!idText.isEmpty()) {
-					QGuiApplication::clipboard()->setText(idText);
-					controller->showToast(tr::ayu_IDCopiedToast(tr::now));
-				}
-				return false;
-			});
 		}
 	}
 	raw->toggleOn(tracker.atLeastOneShownValue());

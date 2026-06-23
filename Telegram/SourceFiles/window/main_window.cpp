@@ -56,10 +56,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <kurlmimedata.h>
 
-// AyuGram includes
-#include "ayu/ui/ayu_logo.h"
-
-
 namespace Window {
 namespace {
 
@@ -126,15 +122,12 @@ base::options::toggle OptionDisableTouchbar({
 const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
 const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
-QImage Logo() {
-	return AyuAssets::currentAppLogo();
+const QImage &Logo() {
+	static const auto result = QImage(u":/gui/art/logo_256.png"_q);
+	return result;
 }
 
-QImage LogoNoMargin() {
-	return AyuAssets::currentAppLogo();
-}
-
-const QImage &LogoTelegramDefault() {
+const QImage &LogoNoMargin() {
 	static const auto result = QImage(u":/gui/art/logo_256_no_margin.png"_q);
 	return result;
 }
@@ -191,7 +184,16 @@ void OverrideApplicationIcon(QImage image) {
 }
 
 QIcon CreateOfficialIcon(Main::Session *session) {
-	return QIcon(Ui::PixmapFromImage(AyuAssets::currentAppLogo()));
+	const auto support = (session && session->supportMode());
+	if (!support) {
+		return QIcon();
+	}
+	auto overriden = OverridenIcon();
+	auto image = overriden.isNull()
+		? Platform::DefaultApplicationIcon()
+		: overriden;
+	ConvertIconToBlack(image);
+	return QIcon(Ui::PixmapFromImage(std::move(image)));
 }
 
 QIcon CreateIcon(Main::Session *session, bool returnNullIfDefault) {
@@ -845,7 +847,7 @@ void MainWindow::updateTitle() {
 		: Dialogs::Key();
 	const auto thread = key ? key.thread() : nullptr;
 	if (!thread) {
-		setTitle((user.isEmpty() ? u"AyuGram"_q : user) + added);
+		setTitle((user.isEmpty() ? u"Telegram"_q : user) + added);
 		return;
 	}
 	const auto history = thread->owningHistory();

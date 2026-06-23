@@ -127,8 +127,6 @@ private:
 	bool _effectOnly = false;
 	bool _valid = false;
 
-	bool _hapticExecuted = false;
-
 	mutable Parabolic _cached;
 
 };

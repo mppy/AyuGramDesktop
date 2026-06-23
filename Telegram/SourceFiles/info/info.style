@@ -1422,7 +1422,7 @@ earnTonIconSize: 16px;
 earnTonIconMargin: margins(0px, 2px, 0px, 0px);
 
 infoMusicButtonRipple: universalRippleAnimation;
-infoMusicButtonPadding: margins(12px, 8px, 24px, 8px);
+infoMusicButtonPadding: margins(16px, 6px, 13px, 6px);
 infoMusicButtonPerformer: FlatLabel(defaultFlatLabel) {
 	textFg: windowSubTextFg;
 	maxHeight: 20px;

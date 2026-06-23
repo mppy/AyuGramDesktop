@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting issues of AyuGram Desktop!
+        Thanks for reporting issues of Telegram Desktop!
 
         To make it easier for us to help you please enter detailed information below.
   - type: textarea
@@ -39,9 +39,12 @@ body:
       required: true
   - type: input
     attributes:
-      label: Version of AyuGram Desktop
+      label: Version of Telegram Desktop
       description: >
-        **Don't use 'latest'**, specify actual version.
+        Please note we don't support versions from Linux distro repositories.
+        If you need support for these versions, **please contact your distro maintainer**
+        or your distro bugtracker.
+        **Don't use 'latest'**, specify actual version, **that's a reason to close your issue**.
     validations:
       required: true
   - type: dropdown
@@ -49,10 +52,11 @@ body:
       label: Installation source
       multiple: false
       options:
-        - Binary from GitHub / @AyuGramReleases channel
-        - Arch Linux (ayugram-desktop / ayugram-desktop-git)
-        - Arch Linux (ayugram-desktop-bin)
-        - flatpak by 0FL01
+        - Static binary from official website
+        - Microsoft Store
+        - Mac App Store
+        - Flatpak
+        - Snap
         - Other (unofficial) source
     validations:
       required: true
@@ -61,7 +65,9 @@ body:
       label: Crash ID
       description: >
         If you're reporting a crash, please enter the crash ID from the crash reporter
-        opening on the next launch after crash.
+        opening on the next launch after crash. **You have to enable beta versions
+        installation in Settings -> Advanced for the reporter to appear.**
+        You don't have to wait for a beta version to arrive.
   - type: textarea
     attributes:
       label: Logs

@@ -125,7 +125,6 @@ struct RightBadge : RuntimeComponent<RightBadge, Element> {
 	BadgeRole role = BadgeRole::User;
 	bool overridden = false;
 	bool special = false;
-	bool channel = false;
 	mutable std::unique_ptr<Ui::RippleAnimation> ripple;
 	mutable QPoint lastPoint;
 };

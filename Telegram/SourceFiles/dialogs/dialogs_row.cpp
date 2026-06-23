@@ -36,12 +36,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_calls.h"
 #include "styles/style_dialogs.h"
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/features/filters/filters_controller.h"
-#include "ayu/ui/ayu_userpic.h"
-
-
 namespace Dialogs {
 namespace {
 
@@ -117,8 +111,7 @@ constexpr auto kBlurRadius = 24;
 [[nodiscard]] QImage CornerBadgeTTL(
 		not_null<PeerData*> peer,
 		Ui::PeerUserpicView &view,
-		int photoSize,
-		QColor background) {
+		int photoSize) {
 	const auto ttl = peer->messagesTTL();
 	if (!ttl) {
 		return QImage();
@@ -127,23 +120,11 @@ constexpr auto kBlurRadius = 24;
 	const auto fullSize = photoSize;
 	const auto partRect = CornerBadgeTTLRect(fullSize);
 	const auto &partSize = partRect.width();
-	auto source = PeerData::GenerateUserpicImage(peer, view, fullSize * ratio);
-	if (source.hasAlphaChannel()) {
-		auto flattened = QImage(
-			source.size(),
-			QImage::Format_ARGB32_Premultiplied);
-		flattened.setDevicePixelRatio(source.devicePixelRatio());
-		flattened.fill(background);
-		{
-			auto painter = QPainter(&flattened);
-			painter.drawImage(0, 0, source);
-		}
-		source = std::move(flattened);
-	}
+	const auto partSkip = fullSize - partSize;
 	auto result = Images::Circle(BlurredDarkenedPart(
-		std::move(source),
+		PeerData::GenerateUserpicImage(peer, view, fullSize * ratio, 0),
 		QRect(
-			partRect.topLeft() * ratio,
+			QPoint(partSkip, partSkip) * ratio,
 			QSize(partSize, partSize) * ratio)));
 	result.setDevicePixelRatio(ratio);
 
@@ -162,7 +143,12 @@ constexpr auto kBlurRadius = 24;
 } // namespace
 
 QRect CornerBadgeTTLRect(int photoSize) {
-	return AyuUserpic::OnlineBadgeRect(photoSize, st::dialogsTTLBadgeSize);
+	const auto &partSize = st::dialogsTTLBadgeSize;
+	return QRect(
+		photoSize - partSize + st::dialogsTTLBadgeSkip.x(),
+		photoSize - partSize + st::dialogsTTLBadgeSkip.y(),
+		partSize,
+		partSize);
 }
 
 QImage BlurredDarkenedPart(QImage image, QRect part) {
@@ -470,11 +456,8 @@ void Row::PaintCornerBadgeFrame(
 			}
 		}
 		if (peer && (peer->forum() || peer->monoforum())) {
-			const auto &settings = AyuSettings::getInstance();
-			const auto singleRadius = settings.singleCornerRadius();
-			const auto radius = singleRadius
-				? AyuUserpic::ComputeRadiusF(context.st->photoSize)
-				: (context.st->photoSize * Ui::ForumUserpicRadiusMultiplier());
+			const auto radius = context.st->photoSize
+				* Ui::ForumUserpicRadiusMultiplier();
 			Ui::PaintOutlineSegments(q, outline, radius, segments);
 		} else {
 			Ui::PaintOutlineSegments(q, outline, segments);
@@ -507,11 +490,7 @@ void Row::PaintCornerBadgeFrame(
 	if (const auto p = manager.progressForLayer(kBottomLayer); p > 0.) {
 		const auto size = photoSize;
 		if (data->cacheTTL.isNull() && peer && peer->messagesTTL()) {
-			data->cacheTTL = CornerBadgeTTL(
-				peer,
-				view,
-				size,
-				(context.active ? st::dialogsBgActive : st::dialogsBg)->c);
+			data->cacheTTL = CornerBadgeTTL(peer, view, size);
 		}
 		q.setOpacity(p);
 		const auto point = CornerBadgeTTLRect(size).topLeft();
@@ -533,6 +512,9 @@ void Row::PaintCornerBadgeFrame(
 		? st::dialogsOnlineBadgeSize
 		: st::dialogsCallBadgeSize;
 	const auto stroke = st::dialogsOnlineBadgeStroke;
+	const auto skip = online
+		? st::dialogsOnlineBadgeSkip
+		: st::dialogsCallBadgeSkip;
 	const auto shrink = (size / 2) * (1. - topLayerProgress);
 
 	auto pen = QPen(Qt::transparent);
@@ -541,13 +523,12 @@ void Row::PaintCornerBadgeFrame(
 	q.setBrush(data->active
 		? st::dialogsOnlineBadgeFgActive
 		: st::dialogsOnlineBadgeFg);
-	const auto badge = AyuUserpic::OnlineBadgeRect(photoSize, size, stroke);
-	q.drawEllipse(QRectF(badge).marginsRemoved({
-		shrink,
-		shrink,
-		shrink,
-		shrink,
-	}));
+	q.drawEllipse(QRectF(
+		photoSize - skip.x() - size,
+		photoSize - skip.y() - size,
+		size,
+		size
+	).marginsRemoved({ shrink, shrink, shrink, shrink }));
 }
 
 void Row::paintUserpic(
@@ -561,12 +542,10 @@ void Row::paintUserpic(
 		updateCornerBadgeShown(peer, nullptr, hasUnreadBadgesAbove);
 	}
 
-	const auto &settings = AyuSettings::getInstance();
-
 	const auto cornerBadgeShown = !_cornerBadgeUserpic
 		? _cornerBadgeShown
 		: !_cornerBadgeUserpic->layersManager.isDisplayedNone();
-	const auto storiesPeer = settings.disableStories() ? nullptr : peer
+	const auto storiesPeer = peer
 		? ((peer->isUser() || peer->isChannel()) ? peer : nullptr)
 		: nullptr;
 	const auto storiesFolder = peer ? nullptr : _id.folder();
@@ -628,17 +607,16 @@ void Row::paintUserpic(
 	const auto paletteVersionReal = style::PaletteVersion();
 	const auto paletteVersion = (paletteVersionReal & ((1 << 17) - 1));
 	const auto active = context.active ? 1 : 0;
-	const auto activeChanged = (_cornerBadgeUserpic->active != active);
 	const auto keyChanged = (_cornerBadgeUserpic->key != key)
 		|| (_cornerBadgeUserpic->paletteVersion != paletteVersion);
-	if (keyChanged || activeChanged) {
+	if (keyChanged) {
 		_cornerBadgeUserpic->cacheTTL = QImage();
 	}
 	const auto subscribed = Data::ChannelHasSubscriptionUntilDate(
 		peer ? peer->asChannel() : nullptr);
 	if (keyChanged
 		|| !_cornerBadgeUserpic->layersManager.isFinished()
-		|| activeChanged
+		|| _cornerBadgeUserpic->active != active
 		|| _cornerBadgeUserpic->frameIndex != frameIndex
 		|| _cornerBadgeUserpic->storiesCount != storiesCount
 		|| _cornerBadgeUserpic->storiesUnreadCount != storiesUnreadCount
@@ -675,18 +653,14 @@ void Row::paintUserpic(
 		? st::dialogsBgActive
 		: st::dialogsBg;
 	const auto size = st::dialogsCallBadgeSize;
-	const auto stroke = st::dialogsOnlineBadgeStroke;
-	const auto badge = AyuUserpic::OnlineBadgeRect(
-		context.st->photoSize,
-		size,
-		stroke);
+	const auto skip = st::dialogsCallBadgeSkip;
 	p.setOpacity(
 		_cornerBadgeUserpic->layersManager.progressForLayer(kTopLayer));
 	p.translate(context.st->padding.left(), context.st->padding.top());
 	actionPainter->paintSpeaking(
 		p,
-		badge.x(),
-		badge.y(),
+		context.st->photoSize - skip.x() - size,
+		context.st->photoSize - skip.y() - size,
 		context.width,
 		bg,
 		context.now);
@@ -775,7 +749,6 @@ void FakeRow::invalidateTopic() {
 const Ui::Text::String &FakeRow::name() const {
 	if (_name.isEmpty()) {
 		const auto from = _searchInChat
-			&& !FiltersController::filtered(_item)
 			? _item->displayFrom()
 			: nullptr;
 		const auto peer = from ? from : _item->history()->peer.get();

@@ -10,7 +10,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/media/history_view_media.h"
 #include "data/data_document.h"
 #include "data/data_photo.h"
-#include "ui/effects/animations.h"
 
 namespace Data {
 class Media;
@@ -74,7 +73,6 @@ public:
 		bool pressed) override;
 
 	void hideSpoilers() override;
-	void revealSpoilers() override;
 	Storage::SharedMediaTypesMask sharedMediaTypes() const override;
 
 	bool overrideEditedDate() const override {
@@ -128,7 +126,6 @@ private:
 		QRect geometry;
 		mutable uint64 cacheKey = 0;
 		mutable QPixmap cache;
-		mutable Ui::Animations::Simple deletedAnimation;
 
 	};
 

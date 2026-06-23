@@ -1033,7 +1033,7 @@ std::unique_ptr<HistoryView::Media> MediaPhoto::createView(
 					message,
 					_chat,
 					_photo,
-					st::msgServiceUserpicSuggestionPhotoWidth));
+					st::msgServicePhotoWidth));
 		}
 		return std::make_unique<HistoryView::Photo>(
 			message,
@@ -1374,7 +1374,7 @@ crl::time MediaFile::ttlSeconds() const {
 }
 
 bool MediaFile::allowsForward() const {
-	return true;
+	return !ttlSeconds();
 }
 
 bool MediaFile::updateInlineResultMedia(const MTPMessageMedia &media) {

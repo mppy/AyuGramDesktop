@@ -71,7 +71,7 @@ constexpr auto kIcons = std::array{
 FilterIconPanel::FilterIconPanel(QWidget *parent)
 : RpWidget(parent)
 , _inner(Ui::CreateChild<Ui::RpWidget>(this))
-, _innerBg(ImageRoundRadius::Large, st::dialogsBg)
+, _innerBg(ImageRoundRadius::Small, st::dialogsBg)
 , _shadow(st::emojiPanAnimation.shadow) {
 	setup();
 }
@@ -380,7 +380,7 @@ void FilterIconPanel::startShowAnimation() {
 				inner.topLeft() * style::DevicePixelRatio(),
 				inner.size() * style::DevicePixelRatio()),
 			st::emojiPanRadius);
-		_showAnimation->setCornerMasks(Images::CornersMask(ImageRoundRadius::Large));
+		_showAnimation->setCornerMasks(Images::CornersMask(ImageRoundRadius::Small));
 		_showAnimation->start();
 	}
 	hideChildren();

@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/saved/info_saved_music_common.h"
 
 #include "data/data_peer.h"
+#include "data/data_document.h"
 #include "data/data_saved_music.h"
 #include "data/data_saved_sublist.h"
 #include "history/history_item.h"
@@ -21,28 +22,20 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/wrap/vertical_layout.h"
 #include "ui/vertical_list.h"
 
-// AyuGram includes
-#include "lang_auto.h"
-#include "ayu/ayu_settings.h"
-#include "ayu/ui/components/saved_music.h"
-#include "ayu/utils/telegram_helpers.h"
-#include "data/data_document.h"
-#include "styles/style_menu_icons.h"
-#include "ui/widgets/popup_menu.h"
-
 namespace Info::Saved {
 
 namespace {
 
 [[nodiscard]] Profile::MusicButtonData DocumentMusicButtonData(
-		not_null<DocumentData*> document, not_null<HistoryItem*> message) {
-	const auto name = Ui::Text::FormatSongNameFor(document);
-
+		not_null<DocumentData*> document,
+		FullMsgId msgId) {
+	auto name = Ui::Text::FormatSongNameFor(document);
+	const auto composed = name.composedName();
 	return {
-		.name = name,
-		.title = name.composedName().title,
-		.performer = name.composedName().performer,
-		.msgId = message->fullId(),
+		.name = std::move(name),
+		.title = composed.title,
+		.performer = composed.performer,
+		.msgId = std::make_shared<FullMsgId>(msgId),
 		.mediaView = document->createMediaView(),
 	};
 }
@@ -82,73 +75,14 @@ void SetupSavedMusic(
 			if (const auto document = item->media()
 					? item->media()->document()
 					: nullptr) {
-				auto musicButton = divider->entity()->add(object_ptr<Ui::SlideWrap<Profile::AyuMusicButton>>(
-					divider->entity(),
-					object_ptr<Profile::AyuMusicButton>(
+				const auto music = divider->entity()->add(
+					object_ptr<Profile::MusicButton>(
 						divider->entity(),
-						DocumentMusicButtonData(document, item),
-						color,
-						[window = controller, peer]
-						{
+						DocumentMusicButtonData(document, item->fullId()),
+						[window = controller, peer] {
 							window->showSection(Info::Saved::MakeMusic(peer));
-						})));
-
-				musicButton->hide(anim::type::instant);
-				musicButton->ease = anim::easeOutCubic;
-				musicButton->setDuration(250);
-				musicButton->entity()->setAcceptBoth(true);
-				musicButton->entity()->clicks() | rpl::filter([=](Qt::MouseButton mouseButton)
-				{
-					return mouseButton == Qt::RightButton;
-				}) | rpl::on_next([=]
-										  {
-											  const auto &settings = AyuSettings::getInstance();
-
-											  const auto contextMenu = new Ui::PopupMenu(
-												  nullptr,
-												  st::popupMenuWithIcons);
-											  contextMenu->setAttribute(Qt::WA_DeleteOnClose);
-
-											  contextMenu->addAction(
-												  settings.adaptiveCoverColor()
-													  ? tr::ayu_DisableColorfulCover(tr::now)
-													  : tr::ayu_EnableColorfulCover(tr::now),
-												  [=]
-												  {
-													  AyuSettings::getInstance().setAdaptiveCoverColor(!AyuSettings::getInstance().adaptiveCoverColor());
-
-													  const auto mediaRefreshed = item ? item->media() : nullptr;
-													  const auto documentRefreshed = mediaRefreshed
-														  ? mediaRefreshed->document()
-														  : nullptr;
-
-													  if (!documentRefreshed) {
-														  return;
-													  }
-													  musicButton->entity()->updateData(
-														  DocumentMusicButtonData(documentRefreshed, item));
-												  },
-												  &st::menuIconPalette);
-
-											  contextMenu->popup(QCursor::pos());
-										  },
-										  musicButton->lifetime());
-
-				const auto weak = base::make_weak(musicButton);
-				musicButton->entity()->onReady() | rpl::on_next(
-					[=]
-					{
-						// fix animation glitch
-						dispatchToMainThread(
-							[=]
-							{
-								if (const auto strong = weak.get()) {
-									strong->show(anim::type::normal);
-								}
-							},
-							st::widgetFadeDuration);
-					},
-					musicButton->lifetime());
+						}));
+				music->setOverrideBg(color);
 			}
 			divider->toggle(true, anim::type::normal);
 		}

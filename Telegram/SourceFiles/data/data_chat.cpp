@@ -20,11 +20,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "apiwrap.h"
 #include "api/api_invite_links.h"
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/utils/telegram_helpers.h"
-
-
 namespace {
 
 using UpdateFlag = Data::PeerUpdate::Flag;
@@ -66,10 +61,6 @@ ChatAdminRightsInfo ChatData::defaultAdminRights(not_null<UserData*> user) {
 		| Flag::PinMessages
 		| Flag::ManageCall
 		| (isCreator ? Flag::AddAdmins : Flag(0)));
-}
-
-bool ChatData::isAyuNoForwards() const {
-	return flags() & Flag::AyuNoForwards;
 }
 
 bool ChatData::allowsForwarding() const {
@@ -117,12 +108,7 @@ bool ChatData::anyoneCanAddMembers() const {
 }
 
 void ChatData::setName(const QString &newName) {
-	auto filteredName = newName;
-	const auto &settings = AyuSettings::getInstance();
-	if (settings.filterZalgo()) {
-		filteredName = filterZalgo(filteredName);
-	}
-	updateNameDelayed(filteredName.isEmpty() ? name() : filteredName, {}, {});
+	updateNameDelayed(newName.isEmpty() ? name() : newName, {}, {});
 }
 
 void ChatData::applyEditAdmin(not_null<UserData*> user, bool isAdmin) {

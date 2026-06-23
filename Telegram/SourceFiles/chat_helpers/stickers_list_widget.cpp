@@ -59,12 +59,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <QtWidgets/QApplication>
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "styles/style_ayu_styles.h"
-#include "boxes/abstract_box.h"
-
-
 namespace ChatHelpers {
 
 [[nodiscard]] QVector<MTPstring> SearchStickersLangCodes() {
@@ -213,7 +207,6 @@ StickersListWidget::StickersListWidget(
 	descriptor.show,
 	descriptor.paused)
 , _mode(descriptor.mode)
-, _requireConfirmation(descriptor.requireConfirmation)
 , _show(std::move(descriptor.show))
 , _features(descriptor.features)
 , _overBg(st::roundRadiusLarge, st().overBg)
@@ -2205,16 +2198,6 @@ void StickersListWidget::paintSticker(
 		(_singleSize.height() - size.height()) / 2);
 
 	auto lottieFrame = QImage();
-
-	QPainterPath path;
-	path.addRoundedRect(QRectF(ppos, size), st::stickerRoundingSize, st::stickerRoundingSize);
-
-	p.save();
-
-	p.setRenderHint(QPainter::Antialiasing, true);
-	p.setClipPath(path);
-	p.setRenderHint(QPainter::Antialiasing, false);
-
 	if (sticker.lottie && sticker.lottie->ready()) {
 		auto request = Lottie::FrameRequest();
 		request.box = boundingBoxSize() * style::DevicePixelRatio();
@@ -2268,8 +2251,6 @@ void StickersListWidget::paintSticker(
 				_pathGradient.get());
 		}
 	}
-
-	p.restore();
 
 	if (selected && stickerHasDeleteButton(set, index)) {
 		const auto xPos = pos
@@ -2799,33 +2780,13 @@ void StickersListWidget::mouseReleaseEvent(QMouseEvent *e) {
 				&& (e->modifiers() & Qt::ControlModifier)) {
 				showStickerSetBox(document, set.id);
 			} else {
-				const auto &settings = AyuSettings::getInstance();
-				auto from = messageSentAnimationInfo(
-					sticker->section,
-					sticker->index,
-					document
-				);
-				auto options = Api::SendOptions();
-				auto sendStickerCallback = crl::guard(
-					this,
-					[=, this]
-					{
-						_chosen.fire({
-							.document = document,
-							.options = options,
-							.messageSendingFrom = from,
-						});
-					});
-
-				if (settings.stickerConfirmation() && (_mode == Mode::Full || _mode == Mode::ChatIntro) && _requireConfirmation) {
-					Ui::show(Ui::MakeConfirmBox({
-						.text = tr::ayu_ConfirmationSticker(),
-						.confirmed = sendStickerCallback,
-						.confirmText = tr::lng_send_button()
-					}));
-				} else {
-					sendStickerCallback();
-				}
+				_chosen.fire({
+					.document = document,
+					.messageSendingFrom = messageSentAnimationInfo(
+						sticker->section,
+						sticker->index,
+						document),
+				});
 			}
 		} else if (auto set = std::get_if<OverSet>(&pressed)) {
 			Assert(set->section >= 0 && set->section < sets.size());
@@ -3296,10 +3257,9 @@ auto StickersListWidget::collectRecentStickers() -> std::vector<Sticker> {
 	result.reserve(cloudCount + recent.size() + customCount);
 	_custom.reserve(cloudCount + recent.size() + customCount);
 
-    const auto &settings = AyuSettings::getInstance();
-
 	auto add = [&](not_null<DocumentData*> document, bool custom) {
-		if (result.size() >= settings.recentStickersCount()) {
+		if (result.size() >= kRecentDisplayLimit
+			&& !OptionUnlimitedRecentStickers.value()) {
 			return;
 		}
 		const auto i = ranges::find(result, document, &Sticker::document);

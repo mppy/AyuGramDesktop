@@ -11,9 +11,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/format_song_name.h"
 #include "ui/text/text.h"
 
+#include <memory>
+
 namespace Data {
 class DocumentMedia;
-}
+} // namespace Data
+
+struct FullMsgId;
 
 namespace Info::Profile {
 
@@ -21,7 +25,7 @@ struct MusicButtonData {
 	Ui::Text::FormatSongName name;
 	QString title;
 	QString performer;
-	FullMsgId msgId;
+	std::shared_ptr<FullMsgId> msgId;
 	std::shared_ptr<Data::DocumentMedia> mediaView;
 };
 

@@ -45,35 +45,20 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
 
-// AyuGram includes
-#include "ayu/utils/telegram_helpers.h"
-#include "ayu/features/streamer_mode/streamer_mode.h"
-
-
 namespace Window {
 namespace Notifications {
 namespace Default {
 namespace {
-
-[[nodiscard]] int notifyWidth() {
-	const auto corner = Core::App().settings().notificationsCorner();
-	return Core::Settings::IsTopCenterCorner(corner) ? st::notifyWidth * 1.5 : st::notifyWidth;
-}
 
 [[nodiscard]] QPoint notificationStartPosition() {
 	const auto corner = Core::App().settings().notificationsCorner();
 	const auto r = NotificationDisplayRect(Core::App().activePrimaryWindow());
 	const auto isLeft = Core::Settings::IsLeftCorner(corner);
 	const auto isTop = Core::Settings::IsTopCorner(corner);
-	auto x = (isLeft == rtl())
-		? (r.x() + r.width() - notifyWidth() - st::notifyDeltaX)
+	const auto x = (isLeft == rtl())
+		? (r.x() + r.width() - st::notifyWidth - st::notifyDeltaX)
 		: (r.x() + st::notifyDeltaX);
 	const auto y = isTop ? r.y() : (r.y() + r.height());
-
-	if (Core::Settings::IsTopCenterCorner(corner)) {
-		x = (r.x() + r.width() / 2 - notifyWidth() / 2);
-	}
-
 	return QPoint(x, y);
 }
 
@@ -692,7 +677,7 @@ Notification::Notification(
 	}
 
 	auto position = computePosition(st::notifyMinHeight);
-	updateGeometry(position.x(), position.y(), notifyWidth(), st::notifyMinHeight);
+	updateGeometry(position.x(), position.y(), st::notifyWidth, st::notifyMinHeight);
 
 	_userpicLoaded = !Ui::PeerUserpicLoading(_userpicView);
 	updateNotifyDisplay();
@@ -729,10 +714,6 @@ Notification::Notification(
 	}, lifetime());
 
 	show();
-
-	if (AyuFeatures::StreamerMode::isEnabled()) {
-		AyuFeatures::StreamerMode::hideWidgetWindow(this);
-	}
 }
 
 void Notification::updateReplyGeometry() {
@@ -1023,7 +1004,7 @@ void Notification::updateNotifyDisplay() {
 				: TextWithEntities{ name };
 		};
 		auto title = options.hideNameAndPhoto
-			? TextWithEntities{ u"AyuGram Desktop"_q }
+			? TextWithEntities{ u"Telegram Desktop"_q }
 			: reminder
 			? tr::lng_notification_reminder(tr::now, tr::marked)
 			: topicWithChat();
@@ -1282,7 +1263,7 @@ HideAllButton::HideAllButton(
 	setCursor(style::cur_pointer);
 
 	auto position = computePosition(st::notifyHideAllHeight);
-	updateGeometry(position.x(), position.y(), notifyWidth(), st::notifyHideAllHeight);
+	updateGeometry(position.x(), position.y(), st::notifyWidth, st::notifyHideAllHeight);
 
 	style::PaletteChanged(
 	) | rpl::on_next([=] {
@@ -1290,10 +1271,6 @@ HideAllButton::HideAllButton(
 	}, lifetime());
 
 	show();
-
-	if (AyuFeatures::StreamerMode::isEnabled()) {
-		AyuFeatures::StreamerMode::hideWidgetWindow(this);
-	}
 }
 
 void HideAllButton::startHiding() {

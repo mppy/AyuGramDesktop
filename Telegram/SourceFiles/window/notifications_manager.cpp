@@ -49,10 +49,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/utils/telegram_helpers.h"
-
 #if __has_include(<gio/gio.hpp>)
 #include <gio/gio.hpp>
 #endif // __has_include(<gio/gio.hpp>)
@@ -397,12 +393,6 @@ System::Timing System::countTiming(
 	} else if (cOtherOnline() >= t) {
 		delay = config.notifyDefaultDelay;
 	}
-
-	const auto &settings = AyuSettings::getInstance();
-	if (settings.disableNotificationsDelay()) {
-		delay = minimalDelay;
-	}
-
 	return {
 		.delay = delay,
 		.when = ms + delay,
@@ -437,10 +427,6 @@ void System::schedule(Data::ItemNotification notification) {
 	const auto thread = item->notificationThread();
 	const auto skip = skipNotification(notification);
 	if (skip.value == SkipState::Skip) {
-		thread->popNotification(notification);
-		return;
-	}
-	if (isMessageHidden(item)) {
 		thread->popNotification(notification);
 		return;
 	}

@@ -4,39 +4,41 @@
 
 Choose a folder for the future build, for example **/home/user/TBuild**. It will be named ***BuildPath*** in the rest of this document. All commands will be launched from Terminal.
 
+### Obtain your API credentials
+
+You will require **api_id** and **api_hash** to access the Telegram API servers. To learn how to obtain them [click here][api_credentials].
+
 ### Clone source code and prepare libraries
 
-Install [poetry](https://python-poetry.org), [docker](https://www.docker.com/) and [docker-buildx](https://docs.docker.com/reference/cli/docker/buildx/), go to ***BuildPath*** and run
+Install [poetry](https://python-poetry.org), go to ***BuildPath*** and run
 
-    git clone --recursive https://github.com/AyuGram/AyuGramDesktop.git tdesktop
+    git clone --recursive https://github.com/telegramdesktop/tdesktop.git
     ./tdesktop/Telegram/build/prepare/linux.sh
 
 ### Building the project
 
-Go to ***BuildPath*/tdesktop** and run
+Go to ***BuildPath*/tdesktop** and run (using [your **api_id** and **api_hash**](#obtain-your-api-credentials))
 
     docker run --rm -it \
         -u $(id -u) \
         -v "$PWD:/usr/src/tdesktop" \
-        ghcr.io/telegramdesktop/tdesktop/centos_env:latest \
+        tdesktop:centos_env \
         /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
-        -D TDESKTOP_API_ID=2040 \
-        -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627
+        -D TDESKTOP_API_ID=YOUR_API_ID \
+        -D TDESKTOP_API_HASH=YOUR_API_HASH
 
-Or, to create a debug build, run
+Or, to create a debug build, run (also using [your **api_id** and **api_hash**](#obtain-your-api-credentials))
 
     docker run --rm -it \
         -u $(id -u) \
         -v "$PWD:/usr/src/tdesktop" \
         -e CONFIG=Debug \
-        ghcr.io/telegramdesktop/tdesktop/centos_env:latest \
+        tdesktop:centos_env \
         /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
-        -D TDESKTOP_API_ID=2040 \
-        -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627
+        -D TDESKTOP_API_ID=YOUR_API_ID \
+        -D TDESKTOP_API_HASH=YOUR_API_HASH
 
 The built files will be in the `out` directory.
-
-You can use `strip` command to reduce binary size.
 
 ### Visual Studio Code integration
 
@@ -54,3 +56,5 @@ Open the repository in Visual Studio Code, install the [Dev Containers](https://
 After that, choose **Reopen in Container** via the menu triggered by the green button in bottom left corner and you're done.
 
 ![Quick actions Status bar item](https://code.visualstudio.com/assets/docs/devcontainers/containers/remote-dev-status-bar.png)
+
+[api_credentials]: api_credentials.md

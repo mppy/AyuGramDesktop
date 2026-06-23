@@ -615,7 +615,7 @@ groupCallPopupMenuWithCover: PopupMenu(groupCallPopupMenu) {
 	}
 }
 groupCallMenuCover: ShortInfoCover(shortInfoCover) {
-	radius: roundRadiusLarge;
+	radius: roundRadiusSmall;
 	size: groupCallMenuCoverSize;
 	namePosition: point(17px, 28px);
 	statusPosition: point(17px, 8px);

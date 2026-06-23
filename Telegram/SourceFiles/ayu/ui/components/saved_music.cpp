@@ -205,7 +205,7 @@ AyuMusicButton::AyuMusicButton(
 	_title->setAttribute(Qt::WA_TransparentForMouseEvents);
 	_performer->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-	downloadAndMakeCover(data.msgId);
+	downloadAndMakeCover(data.msgId ? *data.msgId : FullMsgId());
 
 	setClickedCallback(std::move(handler));
 }
@@ -218,7 +218,7 @@ void AyuMusicButton::updateData(MusicButtonData data) {
 	_performerText = data.performer;
 	_titleText = data.title;
 	_mediaView = data.mediaView;
-	downloadAndMakeCover(data.msgId);
+	downloadAndMakeCover(data.msgId ? *data.msgId : FullMsgId());
 
 	resizeToWidth(widthNoMargins());
 }

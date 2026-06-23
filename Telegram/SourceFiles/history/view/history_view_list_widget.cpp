@@ -95,11 +95,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtWidgets/QApplication>
 #include <QtCore/QMimeData>
 
-// AyuGram includes
-#include "ayu/features/filters/filters_cache_controller.h"
-#include "ayu/utils/telegram_helpers.h"
-
-
 namespace HistoryView {
 namespace {
 
@@ -541,23 +536,6 @@ ListWidget::ListWidget(
 		if (const auto view = viewForItem(item)) {
 			view->itemDataChanged();
 		}
-	}, lifetime());
-
-	rpl::merge(
-		_session->changes().peerUpdates(
-			Data::PeerUpdate::Flag::IsBlocked
-		) | rpl::to_empty,
-		FiltersCacheController::updates()
-	) | rpl::on_next([=] {
-		crl::on_main(this, [=] {
-			if (_viewsCapacity.empty()) {
-				for (const auto &view : _items) {
-					view->setPendingResize();
-				}
-				const auto old = _slice;
-				refreshRows(old);
-			}
-		});
 	}, lifetime());
 
 	_session->downloaderTaskFinished(
@@ -1485,10 +1463,6 @@ bool ListWidget::isGoodForSelection(
 bool ListWidget::addToSelection(
 		SelectedMap &applyTo,
 		not_null<HistoryItem*> item) const {
-	if (isMessageHidden(item)) {
-		return false;
-	}
-
 	const auto itemId = item->fullId();
 	auto [iterator, ok] = applyTo.try_emplace(
 		itemId,
@@ -4427,7 +4401,7 @@ void ListWidget::mouseActionUpdate() {
 	if (dragState.link
 		|| dragState.cursor == CursorState::Date
 		|| dragState.cursor == CursorState::Forwarded) {
-		Ui::Tooltip::Show(350, this);
+		Ui::Tooltip::Show(1000, this);
 	}
 
 	if (_mouseAction == MouseAction::None) {

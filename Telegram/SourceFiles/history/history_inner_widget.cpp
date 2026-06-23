@@ -131,15 +131,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMimeData>
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/features/filters/filters_cache_controller.h"
-#include "ayu/ui/context_menu/context_menu.h"
-#include "ayu/ui/settings/filters/edit_filter.h"
-#include "ayu/utils/telegram_helpers.h"
-#include "data/data_document_media.h"
-
-
 namespace {
 
 constexpr auto kScrollDateHideTimeout = 1000;
@@ -539,51 +530,6 @@ HistoryInner::HistoryInner(
 		_scroll->scrollToY(_scroll->scrollTop() + d);
 	}, _scroll->lifetime());
 
-	_controller->window().widget()->globalForceClicks() |
-		rpl::on_next(
-			[=](QPoint globalPosition)
-			{
-				auto mousePos = mapFromGlobal(globalPosition);
-				auto point = _widget->clampMousePosition(mousePos);
-
-				if (!inSelectionMode().inSelectionMode && !_emptyPainter && rect().contains(mousePos)) {
-					if (const auto view = Element::Moused()) {
-						mouseActionCancel();
-
-						const auto m = mapPointToItem(point, view);
-						const auto inside = view->pointState(m) != PointState::Outside;
-						const auto media = view->data()->media();
-						if (inside && media) {
-							if (const auto preview = media->document()) {
-								if (!preview->sticker()) {
-									if (const auto mediaView = preview->activeMediaView()) {
-										const auto previewState = Data::VideoPreviewState(mediaView.get());
-										if (!previewState.loaded()) {
-											preview->loadVideoThumbnail(view->data()->fullId());
-											preview->loadThumbnail(view->data()->fullId());
-											return;
-										}
-									}
-								}
-
-								_wasForceClickPreview = _controller->uiShow()->showMediaPreview(
-									preview->sticker() ? preview->stickerSetOrigin() : view->data()->fullId(), preview);
-							} else if (const auto previewPhoto = media->photo()) {
-								_wasForceClickPreview =
-									_controller->uiShow()->showMediaPreview(Data::FileOrigin(), previewPhoto);
-							}
-
-							if (!_wasForceClickPreview) {
-								toggleFavoriteReaction(view);
-							}
-						} else {
-							toggleFavoriteReaction(view);
-						}
-					}
-				}
-			},
-			lifetime());
-
 	setupSharingDisallowed();
 	setupSwipeReplyAndBack();
 }
@@ -636,8 +582,8 @@ void HistoryInner::setupSharingDisallowed() {
 		_sharingDisallowed = rpl::combine(
 			Data::PeerFlagValue(user, UserDataFlag::NoForwardsMyEnabled),
 			Data::PeerFlagValue(user, UserDataFlag::NoForwardsPeerEnabled)
-		) | rpl::map([](bool, bool) {
-			return false;
+		) | rpl::map([](bool my, bool peer) {
+			return my || peer;
 		});
 	} else {
 		const auto chat = _peer->asChat();
@@ -801,7 +747,7 @@ void HistoryInner::setupSwipeReplyAndBack() {
 				data.cursorPosition,
 				view);
 			const auto canSendReply = CanSendReply(item);
-			const auto canReply = canSendReply || item->allowsForward();
+			const auto canReply = (canSendReply || item->allowsForward());
 			if (!canReply) {
 				return true;
 			}
@@ -1529,16 +1475,7 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
 				readTill = item;
 			}
 			if (markingAsViewed && item->hasUnwatchedEffect()) {
-				const auto peer = item->history()->peer;
-				const auto &settings = AyuSettings::getInstance();
-				const auto hide = (!settings.showChannelReactions() && peer->isChannel() && !peer->isMegagroup()) ||
-					(!settings.showGroupReactions() && peer->isMegagroup()) ||
-					(!settings.showPrivateChatReactions() && peer->isUser());
-				if (!hide) {
-					startEffects.emplace(view);
-				} else {
-					item->markEffectWatched();
-				}
+				startEffects.emplace(view);
 			}
 			if (markingAsViewed && item->hasViews()) {
 				session().api().views().scheduleIncrement(item);
@@ -2642,11 +2579,6 @@ void HistoryInner::mouseReleaseEvent(QMouseEvent *e) {
 		e->accept();
 		return;
 	}
-	if (_wasForceClickPreview) {
-		_wasForceClickPreview = false;
-		return;
-	}
-
 	registerReadMetricsActivity();
 	mouseActionFinish(e->globalPos(), e->button());
 	if (!rect().contains(e->pos())) {
@@ -3021,12 +2953,6 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				std::move(callback),
 				&st::menuIconStats);
 		}
-
-		AyuUi::AddHistoryAction(_menu, item);
-		AyuUi::AddHideMessageAction(_menu, item);
-		AyuUi::AddUserMessagesAction(_menu, item);
-		AyuUi::AddRepeatMessageAction(_menu, item, HistoryView::Context::History);
-		AyuUi::AddMessageDetailsAction(_menu, item);
 	};
 	const auto addPhotoActions = [&](not_null<PhotoData*> photo, HistoryItem *item) {
 		const auto media = photo->activeMediaView();
@@ -3245,9 +3171,6 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 					&st::menuIconSelect);
 			}();
 		}
-
-		AyuUi::AddReadUntilAction(_menu, item);
-		AyuUi::AddBurnAction(_menu, item);
 	};
 
 	const auto addReplyAction = [&](HistoryItem *item) {
@@ -3441,8 +3364,6 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 				? Element::Hovered()->data().get()
 				: Element::HoveredLink()
 				? Element::HoveredLink()->data().get()
-				: Element::Moused()
-				? Element::Moused()->data().get()
 				: nullptr;
 			return result ? groupLeaderOrSelf(result) : nullptr;
 		}();
@@ -3494,7 +3415,6 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 						hasCopyRestrictionForSelected()));
 				}, &st::menuIconTranslate);
 			}
-			AyuUi::AddCreateFilterAction(_menu, _controller, item, selectedText.rich.text);
 			addItemActions(item, item);
 		} else {
 			addReplyAction(partItemOrLeader);
@@ -5386,7 +5306,7 @@ void HistoryInner::mouseActionUpdate() {
 		|| dragState.cursor == CursorState::Forwarded
 		|| dragState.cursor == CursorState::FromPhoto
 		|| dragState.customTooltip) {
-		Ui::Tooltip::Show(350, this);
+		Ui::Tooltip::Show(1000, this);
 	}
 
 	Qt::CursorShape cur = style::cur_default;
@@ -5737,10 +5657,6 @@ bool HistoryInner::goodForSelection(
 		not_null<SelectedItems*> toItems,
 		not_null<HistoryItem*> item,
 		int &totalCount) const {
-	if (isMessageHidden(item)) {
-		return false;
-	}
-
 	if (!item->isRegular() || item->isService()) {
 		return false;
 	} else if (toItems->find(item) == toItems->end()) {

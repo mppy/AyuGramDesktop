@@ -27,8 +27,8 @@ endif()
 project(Telegram
     LANGUAGES C CXX
     VERSION ${desktop_app_version_cmake}
-    DESCRIPTION "AyuGram Desktop"
-    HOMEPAGE_URL "https://ayugram.one"
+    DESCRIPTION "Official Telegram Desktop messenger"
+    HOMEPAGE_URL "https://desktop.telegram.org"
 )
 
 if (APPLE)

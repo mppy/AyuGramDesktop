@@ -36,14 +36,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_credits.h"
 #include "styles/style_dialogs.h"
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
-#include "ayu/features/message_shot/message_shot.h"
-#include "ayu/utils/telegram_helpers.h"
-#include "core/ui_integration.h"
-#include "styles/style_ayu_icons.h"
-
-
 namespace HistoryView {
 namespace {
 
@@ -179,7 +171,7 @@ TextState BottomInfo::textState(
 	}
 	const auto textWidth = _authorEditedDate.maxWidth();
 	auto withTicksWidth = textWidth;
-	if (!AyuFeatures::MessageShot::isTakingShot() && (_data.flags & (Data::Flag::OutLayout | Data::Flag::Sending))) {
+	if (_data.flags & (Data::Flag::OutLayout | Data::Flag::Sending)) {
 		withTicksWidth += st::historySendStateSpace;
 	}
 	if (!_views.isEmpty()) {
@@ -282,7 +274,7 @@ void BottomInfo::paint(
 
 	auto right = position.x() + width();
 	const auto firstLineBottom = position.y() + st::msgDateFont->height;
-	if (!AyuFeatures::MessageShot::isTakingShot() && (_data.flags & Data::Flag::OutLayout)) {
+	if (_data.flags & Data::Flag::OutLayout) {
 		const auto &icon = (_data.flags & Data::Flag::Sending)
 			? (inverted
 				? st->historySendingInvertedIcon()
@@ -363,7 +355,7 @@ void BottomInfo::paint(
 			firstLineBottom + st::historyViewsTop,
 			outerWidth);
 	}
-	if (!AyuFeatures::MessageShot::isTakingShot() && (_data.flags & Data::Flag::Sending)
+	if ((_data.flags & Data::Flag::Sending)
 		&& !(_data.flags & Data::Flag::OutLayout)) {
 		right -= st::historySendStateSpace;
 		const auto &icon = inverted
@@ -522,6 +514,25 @@ void BottomInfo::layoutDateText() {
 			Ui::Text::IconEmoji(&st::starIconEmojiSmall)
 		).append(Lang::FormatCountToShort(count).string).append(u", "_q);
 	}
+	if (const auto stake = _data.tonStake) {
+		marked.append(
+			QString::number(stake / 1e9)
+		).append(helper.image({
+			.image = Ui::Emoji::SinglePixmap(
+				Ui::Emoji::Find(QString::fromUtf8("\xf0\x9f\x92\x8e")),
+				Ui::Emoji::GetSizeNormal()).toImage().scaledToHeight(
+					st::stakeIconEmojiSize * style::DevicePixelRatio(),
+					Qt::SmoothTransformation),
+			.margin = QMargins(0, st::stakeIconEmojiTop, 0, 0),
+			.textColor = false,
+		})).append("  ");
+	}
+	marked.append(full);
+	_authorEditedDate.setMarkedText(
+		st::msgDateTextStyle,
+		marked,
+		Ui::NameTextOptions(),
+		helper.context());
 }
 
 void BottomInfo::layoutViewsText() {
@@ -563,7 +574,7 @@ QSize BottomInfo::countOptimalSize() {
 		return { st::historyShortcutStateSpace, st::msgDateFont->height };
 	}
 	auto width = 0;
-	if (!AyuFeatures::MessageShot::isTakingShot() && (_data.flags & (Data::Flag::OutLayout | Data::Flag::Sending))) {
+	if (_data.flags & (Data::Flag::OutLayout | Data::Flag::Sending)) {
 		width += st::historySendStateSpace;
 	}
 	width += _authorEditedDate.maxWidth();
@@ -708,12 +719,6 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 		if (item->isSilent()) {
 			result.flags |= Flag::Silent;
 		}
-	}
-	if (item->isDeleted()) {
-		result.flags |= Flag::AyuDeleted;
-	}
-	if (item->isBurnt()) {
-		result.flags |= Flag::AyuBurnt;
 	}
 	if (!forwarded) {
 		return result;

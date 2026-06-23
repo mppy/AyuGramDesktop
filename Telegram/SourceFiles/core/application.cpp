@@ -102,10 +102,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <ksandbox.h>
 
-// AyuGram includes
 #include "ayu/ayu_infra.h"
 #include "ayu/features/streamer_mode/streamer_mode.h"
-
 
 namespace Core {
 namespace {
@@ -1943,7 +1941,7 @@ void Application::RegisterUrlScheme() {
 		.arguments = arguments,
 		.protocol = u"tonsite"_q,
 		.protocolName = u"TonSite Link"_q,
-		.shortAppName = u"tdesktop"_q,
+		.shortAppName = u"AyuGram"_q,
 		.longAppName = QCoreApplication::applicationName(),
 		.displayAppName = AppName.utf16(),
 		.displayAppDescription = AppName.utf16(),

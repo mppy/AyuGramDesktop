@@ -58,11 +58,9 @@ private:
 	void cancelSentRequest();
 	void stopAndRevert();
 	void switchTranslation(not_null<HistoryItem*> item, LanguageId id);
-	void resetProvider();
-	void invalidateTranslations();
 
 	const not_null<History*> _history;
-	std::unique_ptr<Ui::TranslateProvider> _provider;
+	const std::unique_ptr<Ui::TranslateProvider> _provider;
 	rpl::variable<bool> _trackingLanguage = false;
 	base::flat_map<FullMsgId, ItemForRecognize> _itemsForRecognize;
 	uint64 _generation = 0;
@@ -83,3 +81,4 @@ private:
 };
 
 } // namespace HistoryView
+
