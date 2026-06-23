@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/power_saving.h"
 #include "ui/text/text_custom_emoji.h"
 #include "ui/unread_badge_paint.h"
+#include "ayu/ayu_settings.h"
 #include "styles/style_dialogs.h"
 
 namespace Ui {
@@ -235,6 +236,7 @@ PeerBadge::~PeerBadge() = default;
 int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 	Expects(descriptor.customEmojiRepaint != nullptr);
 
+	const auto hidePremiumStatuses = AyuSettings::getInstance().hidePremiumStatuses();
 	const auto peer = descriptor.peer;
 	if ((descriptor.scam && (peer->isScam() || peer->isFake()))
 		|| (descriptor.direct && peer->isMonoforum())) {
@@ -255,8 +257,11 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 			|| descriptor.bothVerifyAndStatus
 			|| !emojiStatus);
 	const auto paintEmoji = emojiStatus
-		&& (!paintVerify || descriptor.bothVerifyAndStatus);
-	const auto paintStar = premiumStar && !paintVerify;
+		&& (!paintVerify || descriptor.bothVerifyAndStatus)
+		&& !hidePremiumStatuses;
+	const auto paintStar = premiumStar
+		&& !paintVerify
+		&& !hidePremiumStatuses;
 
 	auto result = 0;
 	if (paintEmoji) {

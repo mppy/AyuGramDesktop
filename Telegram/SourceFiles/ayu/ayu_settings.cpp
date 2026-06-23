@@ -596,6 +596,7 @@ void AyuSettings::setDisableCustomBackgrounds(bool val) {
 void AyuSettings::setHidePremiumStatuses(bool val) {
 	if (_hidePremiumStatuses.current() == val) return;
 	_hidePremiumStatuses = val;
+	repaintApp();
 	save();
 }
 
@@ -925,8 +926,7 @@ void AyuSettings::setShowStreamerToggleInTray(bool val) {
 void AyuSettings::setMonoFont(const QString &val) {
 	if (_monoFont.current() == val) return;
 	_monoFont = val;
-	// doesn't work because `static const auto family = ...`
-	// AyuUiSettings::setMonoFont(val);
+	AyuUiSettings::setMonoFont(val);
 	// repaintApp();
 	save();
 }
@@ -1041,6 +1041,7 @@ void AyuSettings::setAvatarCorners(int val) {
 	if (_avatarCorners.current() == val) return;
 	_avatarCorners = val;
 	AyuUiSettings::setAvatarCorners(val);
+	repaintApp();
 	save();
 }
 

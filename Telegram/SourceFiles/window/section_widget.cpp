@@ -34,6 +34,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_slide_animation.h"
 #include "window/window_session_controller.h"
 #include "window/themes/window_theme.h"
+#include "ayu/ayu_settings.h"
 
 #include "styles/style_polls.h"
 
@@ -551,10 +552,14 @@ auto ChatThemeValueFromPeer(
 	not_null<SessionController*> controller,
 	not_null<PeerData*> peer)
 -> rpl::producer<std::shared_ptr<Ui::ChatTheme>> {
-	auto cloud = MaybeCloudThemeValueFromPeer(
-		peer
-	) | rpl::map([=](ResolvedTheme resolved)
+	auto cloud = rpl::combine(
+		MaybeCloudThemeValueFromPeer(peer),
+		AyuSettings::getInstance().disableCustomBackgroundsValue()
+	) | rpl::map([=](ResolvedTheme resolved, bool disableCustomBackgrounds)
 	-> rpl::producer<std::shared_ptr<Ui::ChatTheme>> {
+		if (disableCustomBackgrounds && resolved.paper && resolved.paper->media) {
+			resolved.paper = std::nullopt;
+		}
 		if (!resolved.theme && !resolved.paper) {
 			return rpl::single(controller->defaultChatTheme());
 		}
