@@ -68,6 +68,7 @@ void initIcon() {
 }
 
 void init() {
+	AyuSettings::load();
 	initLang();
 	initDatabase();
 	initUiSettings();

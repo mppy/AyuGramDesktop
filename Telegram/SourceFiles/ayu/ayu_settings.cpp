@@ -20,15 +20,17 @@
 #include "rpl/combine.h"
 #include "window/window_controller.h"
 
-#include <fstream>
 #include <QApplication>
+#include <QDir>
+#include <QFile>
+#include <QSaveFile>
 
 using json = nlohmann::json;
 
 namespace {
 
-std::string getSettingsPath() {
-	return (cWorkingDir() + u"tdata/ayu_settings.json"_q).toStdString();
+QString getSettingsPath() {
+	return cWorkingDir() + u"tdata/ayu_settings.json"_q;
 }
 
 void repaintApp() {
@@ -364,17 +366,16 @@ AyuSettings &AyuSettings::getInstance() {
 }
 
 void AyuSettings::load() {
-	std::ifstream file(getSettingsPath());
-	if (!file.good()) {
+	QFile file(getSettingsPath());
+	if (!file.open(QIODevice::ReadOnly)) {
 		return;
 	}
 
 	auto &settings = getInstance();
 
 	try {
-		json p;
-		file >> p;
-		file.close();
+		const auto bytes = file.readAll();
+		auto p = json::parse(bytes.constData(), bytes.constData() + bytes.size());
 
 		if (!p.contains("ghostModeSettings")) {
 			p["ghostModeSettings"] = nlohmann::json::object({
@@ -420,10 +421,21 @@ void AyuSettings::save() {
 	auto &settings = getInstance();
 	json p = settings;
 
-	std::ofstream file;
-	file.open(getSettingsPath());
-	file << p.dump(4);
-	file.close();
+	QDir().mkpath(cWorkingDir() + u"tdata"_q);
+
+	QSaveFile file(getSettingsPath());
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+		LOG(("AyuGramSettings: failed to open settings file for writing"));
+		return;
+	}
+	const auto bytes = QByteArray::fromStdString(p.dump(4));
+	if (file.write(bytes) != bytes.size()) {
+		LOG(("AyuGramSettings: failed to write settings file"));
+		return;
+	}
+	if (!file.commit()) {
+		LOG(("AyuGramSettings: failed to commit settings file"));
+	}
 }
 
 void AyuSettings::reset() {
