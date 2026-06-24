@@ -21,6 +21,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_session_controller.h"
 #include "styles/style_window.h"
 
+#include "ayu/ayu_settings.h"
+#include "ayu/ui/ayu_logo.h"
+
 #include <qpa/qplatformscreen.h>
 #include <qpa/qplatformsystemtrayicon.h>
 #include <qpa/qplatformtheme.h>
@@ -126,6 +129,20 @@ bool DarkTasbarValueValid/* = false*/;
 	static auto ScaledLogoNoMargin = base::flat_map<int, QImage>();
 	static auto ScaledLogoDark = base::flat_map<int, QImage>();
 	static auto ScaledLogoLight = base::flat_map<int, QImage>();
+
+	static auto lastUsedIcon = AyuAssets::currentAppLogoName();
+	if (lastUsedIcon != AyuAssets::currentAppLogoName()) {
+		lastUsedIcon = AyuAssets::currentAppLogoName();
+		ScaledLogo = base::flat_map<int, QImage>();
+		ScaledLogoNoMargin = base::flat_map<int, QImage>();
+		ScaledLogoDark = base::flat_map<int, QImage>();
+		ScaledLogoLight = base::flat_map<int, QImage>();
+	}
+
+	const auto &settings = AyuSettings::getInstance();
+	if (settings.hideNotificationBadge()) {
+		args.count = 0;
+	}
 
 	const auto darkMode = IsDarkTaskbar();
 	auto &scaled = (monochrome && darkMode)

@@ -45,6 +45,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_window.h"
 #include "styles/style_dialogs.h" // ChildSkip().x() for new child windows.
 
+#include "ayu/ui/ayu_logo.h"
+
 #ifdef Q_OS_MAC
 #include "platform/mac/global_menu_mac.h"
 #endif // Q_OS_MAC
@@ -122,14 +124,12 @@ base::options::toggle OptionDisableTouchbar({
 const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
 const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
-const QImage &Logo() {
-	static const auto result = QImage(u":/gui/art/logo_256.png"_q);
-	return result;
+QImage Logo() {
+	return AyuAssets::currentAppLogo();
 }
 
-const QImage &LogoNoMargin() {
-	static const auto result = QImage(u":/gui/art/logo_256_no_margin.png"_q);
-	return result;
+QImage LogoNoMargin() {
+	return AyuAssets::currentAppLogo();
 }
 
 void ConvertIconToBlack(QImage &image) {
@@ -184,16 +184,7 @@ void OverrideApplicationIcon(QImage image) {
 }
 
 QIcon CreateOfficialIcon(Main::Session *session) {
-	const auto support = (session && session->supportMode());
-	if (!support) {
-		return QIcon();
-	}
-	auto overriden = OverridenIcon();
-	auto image = overriden.isNull()
-		? Platform::DefaultApplicationIcon()
-		: overriden;
-	ConvertIconToBlack(image);
-	return QIcon(Ui::PixmapFromImage(std::move(image)));
+	return QIcon(Ui::PixmapFromImage(AyuAssets::currentAppLogo()));
 }
 
 QIcon CreateIcon(Main::Session *session, bool returnNullIfDefault) {
@@ -202,7 +193,7 @@ QIcon CreateIcon(Main::Session *session, bool returnNullIfDefault) {
 		return officialIcon;
 	}
 
-	auto result = QIcon(Ui::PixmapFromImage(base::duplicate(Logo())));
+	auto result = QIcon(Ui::PixmapFromImage(Logo()));
 
 	if constexpr (!Platform::IsLinux()) {
 		return result;

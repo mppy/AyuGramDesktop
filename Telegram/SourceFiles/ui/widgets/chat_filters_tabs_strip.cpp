@@ -38,6 +38,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_media_player.h" // mediaPlayerMenuCheck
 #include "styles/style_menu_icons.h"
 
+#include "ayu/ayu_settings.h"
+
 #include <QScrollBar>
 
 namespace Ui {
@@ -234,20 +236,23 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 		state->reorderLifetime.destroy();
 		const auto &list = session->data().chatsFilters().list();
 		auto includeMuted = Data::IncludeMutedCounterFoldersValue();
+		auto hideCounters = AyuSettings::getInstance().hideNotificationCountersValue();
 		for (auto i = 0; i < list.size(); i++) {
 			rpl::combine(
 				Data::UnreadStateValue(session, list[i].id()),
-				rpl::duplicate(includeMuted)
+				rpl::duplicate(includeMuted),
+				rpl::duplicate(hideCounters)
 			) | rpl::on_next([=](
 					const Dialogs::UnreadState &state,
-					bool includeMuted) {
+					bool includeMuted,
+					bool hideCounters) {
 				const auto chats = state.chats;
 				const auto chatsMuted = state.chatsMuted;
 				const auto muted = (chatsMuted + state.marksMuted);
 				const auto count = (chats + state.marks)
 					- (includeMuted ? 0 : muted);
 				const auto isMuted = includeMuted && (count == muted);
-				slider->setUnreadCount(i, count, isMuted);
+				slider->setUnreadCount(i, hideCounters ? 0 : count, isMuted);
 				slider->fitWidthToSections();
 			}, state->reorderLifetime);
 		}
@@ -264,7 +269,8 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 
 			const auto filters = &session->data().chatsFilters();
 			const auto &list = filters->list();
-			if (!session->user()->isPremium()) {
+			if (!AyuSettings::getInstance().hideAllChatsFolder()
+				&& !session->user()->isPremium()) {
 				if (list[0].id() != FilterId()) {
 					filters->moveAllToFront();
 				}
@@ -416,7 +422,8 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 			if (state->reorder) {
 				state->reorder->cancel();
 				state->reorder->clearPinnedIntervals();
-				if (!reorderAll) {
+				if (!reorderAll
+					&& !AyuSettings::getInstance().hideAllChatsFolder()) {
 					state->reorder->addPinnedInterval(0, 1);
 				}
 				state->reorder->addPinnedInterval(

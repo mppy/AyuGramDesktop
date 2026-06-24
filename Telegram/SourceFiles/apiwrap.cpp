@@ -100,6 +100,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/file_upload.h"
 #include "storage/storage_account.h"
 
+#include "ayu/ayu_settings.h"
+
 namespace {
 
 // Save draft to the cloud with 1 sec extra delay.
@@ -468,7 +470,19 @@ void ApiWrap::toggleHistoryArchived(
 		if (archived) {
 			history->setFolder(_session->data().folder(archiveId));
 		} else {
-			history->clearFolder();
+			const auto &settings = AyuSettings::getInstance();
+			if (settings.hideAllChatsFolder()) {
+				if (const auto window = Core::App().activeWindow()) {
+					if (const auto controller = window->sessionController()) {
+						const auto filters = &_session->data().chatsFilters();
+						const auto lookupId = filters->lookupId(
+							controller->session().premium() ? 0 : 1);
+						controller->setActiveChatsFilter(lookupId);
+					}
+				}
+			} else {
+				history->clearFolder();
+			}
 		}
 		if (const auto data = _historyArchivedRequests.take(history)) {
 			data->second();

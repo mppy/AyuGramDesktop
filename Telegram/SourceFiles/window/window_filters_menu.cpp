@@ -41,6 +41,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h" // attentionBoxButton
 #include "styles/style_menu_icons.h"
 
+#include "ayu/ayu_settings.h"
+
 namespace Window {
 
 FiltersMenu::FiltersMenu(
@@ -158,11 +160,14 @@ void FiltersMenu::setupMainMenuIcon() {
 	OtherAccountsUnreadState(
 		&_session->session().account()
 	) | rpl::on_next([=](const OthersUnreadState &state) {
-		const auto icon = !state.count
+		auto icon = !state.count
 			? nullptr
 			: !state.allMuted
 			? &st::windowFiltersMainMenuUnread
 			: &st::windowFiltersMainMenuUnreadMuted;
+		if (AyuSettings::getInstance().hideNotificationCounters()) {
+			icon = nullptr;
+		}
 		_menu.setIconOverride(icon, icon);
 	}, _outer.lifetime());
 }
@@ -194,6 +199,7 @@ void FiltersMenu::scrollToButton(not_null<Ui::RpWidget*> widget) {
 }
 
 void FiltersMenu::refresh() {
+	const auto &settings = AyuSettings::getInstance();
 	const auto filters = &_session->session().data().chatsFilters();
 	if (!filters->has() || _ignoreRefresh) {
 		return;
@@ -209,7 +215,7 @@ void FiltersMenu::refresh() {
 	const auto maxLimit = (reorderAll ? 1 : 0)
 		+ Data::PremiumLimits(&_session->session()).dialogFiltersCurrent();
 	const auto premiumFrom = (reorderAll ? 0 : 1) + maxLimit;
-	if (!reorderAll) {
+	if (!reorderAll && !settings.hideAllChatsFolder()) {
 		_reorder->addPinnedInterval(0, 1);
 	}
 	_reorder->addPinnedInterval(
@@ -239,6 +245,12 @@ void FiltersMenu::refresh() {
 	// After the filters are refreshed, the scroll is reset,
 	// so we have to restore it.
 	_scroll.scrollToY(oldTop);
+
+	if (settings.hideAllChatsFolder()
+		&& _session->widget()->sessionContent()) {
+		const auto lookupId = filters->lookupId(0);
+		_session->setActiveChatsFilter(lookupId);
+	}
 }
 
 void FiltersMenu::setupList() {
@@ -309,15 +321,21 @@ base::unique_qptr<Ui::SideBarButton> FiltersMenu::prepareButton(
 	if (id >= 0) {
 		rpl::combine(
 			Data::UnreadStateValue(&_session->session(), id),
-			Data::IncludeMutedCounterFoldersValue()
+			Data::IncludeMutedCounterFoldersValue(),
+			AyuSettings::getInstance().hideNotificationCountersValue()
 		) | rpl::on_next([=](
 				const Dialogs::UnreadState &state,
-				bool includeMuted) {
+				bool includeMuted,
+				bool hideCounters) {
 			const auto chats = state.chats;
 			const auto chatsMuted = state.chatsMuted;
-			const auto muted = (chatsMuted + state.marksMuted);
-			const auto count = (chats + state.marks)
+			auto muted = (chatsMuted + state.marksMuted);
+			auto count = (chats + state.marks)
 				- (includeMuted ? 0 : muted);
+			if (hideCounters) {
+				count = 0;
+				muted = 0;
+			}
 			const auto string = !count
 				? QString()
 				: (count > 999)
@@ -468,7 +486,8 @@ void FiltersMenu::applyReorder(
 
 	const auto filters = &_session->session().data().chatsFilters();
 	const auto &list = filters->list();
-	if (!premium()) {
+	const auto &settings = AyuSettings::getInstance();
+	if (!settings.hideAllChatsFolder() && !premium()) {
 		if (list[0].id() != FilterId()) {
 			filters->moveAllToFront();
 		}

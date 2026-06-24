@@ -14,6 +14,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "platform/platform_specific.h"
 #include "lang/lang_keys.h"
 
+#include "ayu/ayu_settings.h"
+#include "ayu/features/streamer_mode/streamer_mode.h"
+#include "lang_auto.h"
+
 #include <QtWidgets/QApplication>
 
 namespace Core {
@@ -98,6 +102,45 @@ void Tray::rebuildMenu() {
 		_tray.addAction(
 			std::move(notificationsText),
 			[=] { toggleSoundNotifications(); });
+	}
+
+	const auto &settings = AyuSettings::getInstance();
+	if (settings.showGhostToggleInTray()) {
+		auto ghostActiveChanges = AyuSettings::getInstance().useGlobalGhostModeValue(
+		) | rpl::map([](bool) {
+			return AyuSettings::ghost().ghostModeActiveValue();
+		}) | rpl::flatten_latest();
+
+		auto text = rpl::combine(
+			_textUpdates.events_starting_with({}),
+			std::move(ghostActiveChanges)
+		) | rpl::map([](auto, bool active) {
+			return active
+				? tr::ayu_DisableGhostModeTray(tr::now)
+				: tr::ayu_EnableGhostModeTray(tr::now);
+		});
+		_tray.addAction(std::move(text), [=] {
+			auto &ghost = AyuSettings::ghost();
+			ghost.setGhostModeEnabled(!ghost.isGhostModeActive());
+			updateMenuText();
+		});
+	}
+
+	if (settings.showStreamerToggleInTray()) {
+		auto text = _textUpdates.events_starting_with({}
+		) | rpl::map([] {
+			return AyuFeatures::StreamerMode::isEnabled()
+				? tr::ayu_DisableStreamerModeTray(tr::now)
+				: tr::ayu_EnableStreamerModeTray(tr::now);
+		});
+		_tray.addAction(std::move(text), [=] {
+			if (AyuFeatures::StreamerMode::isEnabled()) {
+				AyuFeatures::StreamerMode::disable();
+			} else {
+				AyuFeatures::StreamerMode::enable();
+			}
+			updateMenuText();
+		});
 	}
 
 	_tray.addAction(tr::lng_quit_from_tray(), [] { Core::Quit(); });

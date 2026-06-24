@@ -57,6 +57,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_changes.h"
 #include "data/data_forum_topic.h"
 #include "data/data_send_action.h"
+#include "data/data_chat_filters.h"
 #include "dialogs/dialogs_main_list.h"
 #include "chat_helpers/emoji_interactions.h"
 #include "base/call_delayed.h"
@@ -69,6 +70,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_chat.h"
 #include "styles/style_info.h"
 #include "styles/style_menu_icons.h"
+
+#include "ayu/ayu_settings.h"
 
 #include <QtGui/QWindow>
 
@@ -841,7 +844,15 @@ void TopBarWidget::infoClicked() {
 
 void TopBarWidget::backClicked() {
 	if (_activeChat.key.folder()) {
-		_controller->closeFolder();
+		const auto &settings = AyuSettings::getInstance();
+		if (settings.hideAllChatsFolder()) {
+			const auto filters = &_controller->session().data().chatsFilters();
+			const auto lookupId = filters->lookupId(
+				_controller->session().premium() ? 0 : 1);
+			_controller->setActiveChatsFilter(lookupId);
+		} else {
+			_controller->closeFolder();
+		}
 	} else if (_activeChat.section == Section::ChatsList
 		&& _activeChat.key.history()
 		&& _activeChat.key.history()->isForum()) {
