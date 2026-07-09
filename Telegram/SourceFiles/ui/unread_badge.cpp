@@ -19,7 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/power_saving.h"
 #include "ui/text/text_custom_emoji.h"
 #include "ui/unread_badge_paint.h"
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 #include "styles/style_dialogs.h"
 
 namespace Ui {
@@ -236,7 +236,7 @@ PeerBadge::~PeerBadge() = default;
 int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 	Expects(descriptor.customEmojiRepaint != nullptr);
 
-	const auto hidePremiumStatuses = AyuSettings::getInstance().hidePremiumStatuses();
+	const auto hidePremiumStatuses = PurrSettings::getInstance().hidePremiumStatuses();
 	const auto peer = descriptor.peer;
 	if ((descriptor.scam && (peer->isScam() || peer->isFake()))
 		|| (descriptor.direct && peer->isMonoforum())) {

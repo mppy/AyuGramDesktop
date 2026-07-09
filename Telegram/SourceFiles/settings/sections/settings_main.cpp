@@ -88,9 +88,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QGuiApplication>
 #include <QtGui/QWindow>
 
-#include "ayu/ui/settings/settings_main.h"
-#include "ayu/ui/utils/ayu_profile_values.h"
-#include "ayu/utils/telegram_helpers.h"
+#include "purr/ui/settings/settings_main.h"
+#include "purr/ui/utils/purr_profile_values.h"
+#include "purr/utils/telegram_helpers.h"
 
 namespace Settings {
 namespace {
@@ -188,7 +188,7 @@ Cover::Cover(
 	_name->setContextCopyText(tr::lng_profile_copy_fullname(tr::now));
 
 	_id->setSelectable(true);
-	_id->setContextCopyText(tr::ayu_ContextCopyID(tr::now));
+	_id->setContextCopyText(tr::purr_ContextCopyID(tr::now));
 	const auto hook = [=](Ui::FlatLabel::ContextMenuRequest request) {
 		if (request.selection.empty()) {
 			const auto callback = [=] {
@@ -196,7 +196,7 @@ Cover::Cover(
 				TextUtilities::SetClipboardText({ id });
 			};
 			request.menu->addAction(
-				tr::ayu_ContextCopyID(tr::now),
+				tr::purr_ContextCopyID(tr::now),
 				callback,
 				&st::menuIconCopy);
 		} else {
@@ -383,10 +383,10 @@ void BuildSectionButtons(SectionBuilder &builder) {
 	const auto showOther = builder.showOther();
 
 	builder.addSectionButton({
-		.title = tr::ayu_AyuPreferences(),
-		.targetSection = AyuMain::Id(),
+		.title = tr::purr_PurrPreferences(),
+		.targetSection = PurrMain::Id(),
 		.icon = { &st::menuIconPremium },
-		.keywords = { u"ayu"_q },
+		.keywords = { u"purr"_q },
 	});
 	builder.addSkip();
 	builder.addDivider();

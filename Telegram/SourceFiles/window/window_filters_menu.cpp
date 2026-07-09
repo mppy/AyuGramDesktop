@@ -41,7 +41,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h" // attentionBoxButton
 #include "styles/style_menu_icons.h"
 
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 
 namespace Window {
 
@@ -165,7 +165,7 @@ void FiltersMenu::setupMainMenuIcon() {
 			: !state.allMuted
 			? &st::windowFiltersMainMenuUnread
 			: &st::windowFiltersMainMenuUnreadMuted;
-		if (AyuSettings::getInstance().hideNotificationCounters()) {
+		if (PurrSettings::getInstance().hideNotificationCounters()) {
 			icon = nullptr;
 		}
 		_menu.setIconOverride(icon, icon);
@@ -199,7 +199,7 @@ void FiltersMenu::scrollToButton(not_null<Ui::RpWidget*> widget) {
 }
 
 void FiltersMenu::refresh() {
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 	const auto filters = &_session->session().data().chatsFilters();
 	if (!filters->has() || _ignoreRefresh) {
 		return;
@@ -322,7 +322,7 @@ base::unique_qptr<Ui::SideBarButton> FiltersMenu::prepareButton(
 		rpl::combine(
 			Data::UnreadStateValue(&_session->session(), id),
 			Data::IncludeMutedCounterFoldersValue(),
-			AyuSettings::getInstance().hideNotificationCountersValue()
+			PurrSettings::getInstance().hideNotificationCountersValue()
 		) | rpl::on_next([=](
 				const Dialogs::UnreadState &state,
 				bool includeMuted,
@@ -486,7 +486,7 @@ void FiltersMenu::applyReorder(
 
 	const auto filters = &_session->session().data().chatsFilters();
 	const auto &list = filters->list();
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 	if (!settings.hideAllChatsFolder() && !premium()) {
 		if (list[0].id() != FilterId()) {
 			filters->moveAllToFront();

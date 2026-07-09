@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_inner_widget.h"
+#include "purr/ui/context_menu/context_menu.h"
 
 #include "api/api_polls.h"
 #include "chat_helpers/stickers_emoji_pack.h"
@@ -3707,6 +3708,12 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 	if (_menu->empty()) {
 		_menu = nullptr;
 		return;
+	}
+	if (const auto purrItem = leaderOrSelf) {
+		PurrUi::AddHistoryAction(_menu, purrItem);
+		PurrUi::AddHideMessageAction(_menu, purrItem);
+		PurrUi::AddUserMessagesAction(_menu, purrItem);
+		PurrUi::AddMessageDetailsAction(_menu, purrItem);
 	}
 	using namespace HistoryView::Reactions;
 	const auto desiredPosition = e->globalPos();

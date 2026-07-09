@@ -38,7 +38,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_media_player.h" // mediaPlayerMenuCheck
 #include "styles/style_menu_icons.h"
 
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 
 #include <QScrollBar>
 
@@ -236,7 +236,7 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 		state->reorderLifetime.destroy();
 		const auto &list = session->data().chatsFilters().list();
 		auto includeMuted = Data::IncludeMutedCounterFoldersValue();
-		auto hideCounters = AyuSettings::getInstance().hideNotificationCountersValue();
+		auto hideCounters = PurrSettings::getInstance().hideNotificationCountersValue();
 		for (auto i = 0; i < list.size(); i++) {
 			rpl::combine(
 				Data::UnreadStateValue(session, list[i].id()),
@@ -269,7 +269,7 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 
 			const auto filters = &session->data().chatsFilters();
 			const auto &list = filters->list();
-			if (!AyuSettings::getInstance().hideAllChatsFolder()
+			if (!PurrSettings::getInstance().hideAllChatsFolder()
 				&& !session->user()->isPremium()) {
 				if (list[0].id() != FilterId()) {
 					filters->moveAllToFront();
@@ -423,7 +423,7 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 				state->reorder->cancel();
 				state->reorder->clearPinnedIntervals();
 				if (!reorderAll
-					&& !AyuSettings::getInstance().hideAllChatsFolder()) {
+					&& !PurrSettings::getInstance().hideAllChatsFolder()) {
 					state->reorder->addPinnedInterval(0, 1);
 				}
 				state->reorder->addPinnedInterval(

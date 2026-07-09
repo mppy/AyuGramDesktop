@@ -25,7 +25,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_app_config.h"
 #include "apiwrap.h"
 
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 
 namespace Data {
 namespace {
@@ -389,7 +389,7 @@ ChatFilters::ChatFilters(not_null<Session*> owner)
 	_list.emplace_back();
 	crl::on_main(&owner->session(), [=] { load(); });
 
-	AyuSettings::getInstance().hideAllChatsFolderChanges(
+	PurrSettings::getInstance().hideAllChatsFolderChanges(
 	) | rpl::on_next([=](bool hide) {
 		if (!_loaded) {
 			return;
@@ -504,7 +504,7 @@ void ChatFilters::requestToggleTags(bool value, Fn<void()> fail) {
 }
 
 void ChatFilters::received(const QVector<MTPDialogFilter> &list) {
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 
 	auto position = 0;
 	auto changed = false;
@@ -548,7 +548,7 @@ void ChatFilters::received(const QVector<MTPDialogFilter> &list) {
 }
 
 void ChatFilters::apply(const MTPUpdate &update) {
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 
 	update.match([&](const MTPDupdateDialogFilter &data) {
 		if (const auto filter = data.vfilter()) {
@@ -933,7 +933,7 @@ FilterId ChatFilters::lookupId(int index) const {
 		return FilterId();
 	}
 
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 	if (_owner->session().user()->isPremium()
 		|| !_list.front().id()
 		|| settings.hideAllChatsFolder()) {

@@ -310,6 +310,7 @@ public:
 		return _notify;
 	}
 
+	[[nodiscard]] bool isPurrNoForwards() const;
 	[[nodiscard]] bool isAyuNoForwards() const;
 	[[nodiscard]] bool allowsForwarding() const;
 	[[nodiscard]] Data::RestrictionCheckResult amRestricted(

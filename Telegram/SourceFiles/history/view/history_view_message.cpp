@@ -60,7 +60,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/themes/window_theme.h" // IsNightMode.
 #include "window/window_session_controller.h"
 #include "apiwrap.h"
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 #include "styles/style_chat.h"
 #include "styles/style_chat_helpers.h"
 #include "styles/style_dialogs.h"
@@ -2426,7 +2426,7 @@ void Message::paintFromName(
 		}
 		return &info->nameText();
 	}();
-	const auto hidePremiumStatuses = AyuSettings::getInstance().hidePremiumStatuses();
+	const auto hidePremiumStatuses = PurrSettings::getInstance().hidePremiumStatuses();
 	const auto statusWidth = _fromNameStatus && !hidePremiumStatuses
 		? st::dialogsPremiumIcon.icon.width()
 		: 0;

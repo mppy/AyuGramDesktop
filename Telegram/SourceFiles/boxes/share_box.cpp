@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/storage_account.h"
 #include "ui/boxes/confirm_box.h"
 #include "apiwrap.h"
+#include "purr/features/forward/purr_forward.h"
 #include "ui/widgets/chat_filters_tabs_strip.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/widgets/multi_select.h"
@@ -1708,6 +1709,31 @@ ShareBox::SubmitCallback ShareBox::DefaultForwardCallback(
 		if (existingIds.empty() || result.empty()) {
 			return;
 		}
+
+		// PurrGram: if source items are from noforwards/restricted chat,
+		// route through ApiWrap::forwardMessages() which has PurrForward
+		// fallback hook (download media + resend without author).
+		// The default MTP direct path gets server error CHAT_FORWARDS_RESTRICTED.
+		if (PurrForward::isPurrForwardNeeded(items)) {
+			for (const auto &thread : result) {
+				auto sendAction = Api::SendAction(thread, options);
+				sendAction.clearDraft = false;
+				if (!comment.text.isEmpty()) {
+					auto message = Api::MessageToSend(sendAction);
+					message.textWithTags = comment;
+					history->session().api().sendMessage(std::move(message));
+				}
+				history->session().api().forwardMessages(
+					Data::ResolvedForwardDraft{
+						.items = items,
+						.options = forwardOptions,
+					},
+					Api::SendAction(thread, options),
+					nullptr);
+			}
+			return;
+		}
+
 		if (HistoryView::Controls::HasRichPage(items)) {
 			forwardOptions = HistoryView::Controls::NormalizeForwardOptions(
 				&history->session(),

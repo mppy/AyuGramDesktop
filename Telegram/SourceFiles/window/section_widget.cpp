@@ -34,7 +34,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_slide_animation.h"
 #include "window/window_session_controller.h"
 #include "window/themes/window_theme.h"
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 
 #include "styles/style_polls.h"
 
@@ -554,7 +554,7 @@ auto ChatThemeValueFromPeer(
 -> rpl::producer<std::shared_ptr<Ui::ChatTheme>> {
 	auto cloud = rpl::combine(
 		MaybeCloudThemeValueFromPeer(peer),
-		AyuSettings::getInstance().disableCustomBackgroundsValue()
+		PurrSettings::getInstance().disableCustomBackgroundsValue()
 	) | rpl::map([=](ResolvedTheme resolved, bool disableCustomBackgrounds)
 	-> rpl::producer<std::shared_ptr<Ui::ChatTheme>> {
 		if (disableCustomBackgrounds && resolved.paper && resolved.paper->media) {

@@ -1,0 +1,82 @@
+/*
+ * This is the source code of PurrGram for Desktop.
+ *
+ * We do not and cannot prevent the use of our code,
+ * but be respectful and credit the original author.
+ *
+ * Copyright @Radolyn, 2025
+ */
+
+using "ui/colors.palette";
+using "ui/chat/chat.style";
+using "ui/widgets/widgets.style";
+using "dialogs/dialogs.style";
+
+purrGhostIcon: icon {{ "purr/ghost", menuIconColor }};
+purrGhostModeGlobalIcon: icon {{ "purr/ghost_mode_global", historyPeerUserpicFg }};
+purrEditsHistoryIcon: icon {{ "purr/edits_history", menuIconColor }};
+purrLReadMenuIcon: icon {{ "purr/lread", menuIconColor }};
+purrSReadMenuIcon: icon {{ "purr/sread", menuIconColor }};
+purrStreamerModeMenuIcon: icon {{ "purr/streamer", menuIconColor }};
+purrToBeginningMenuIcon: icon {{ "purr/to_beginning", menuIconColor }};
+purrRepeatMenuIcon: icon {{ "purr/repeat", menuIconColor }};
+purrContactsMutualIcon: icon {{ "purr/contacts_mutual", contactsStatusFg }};
+purrContactsMutualIconOver: icon {{ "purr/contacts_mutual", contactsStatusFgOver }};
+
+messageFieldAttachIcon: icon {{ "purr/message_field/attach", menuIconColor }};
+messageFieldCommandsIcon: icon {{ "purr/message_field/commands", menuIconColor }};
+messageFieldEmojiIcon: icon {{ "purr/message_field/emoji", menuIconColor }};
+messageFieldVoiceIcon: icon {{ "purr/message_field/voice", menuIconColor }};
+messageFieldTTLIcon: icon {{ "purr/message_field/ttl", menuIconColor }};
+messageFieldCocoonAiIcon: icon{
+	{ size(24px, 24px), transparent },
+	{ "chat/ai_letters-20x20", menuIconColor, point(2px, 2px) },
+	{ "chat/ai_star1-20x20", menuIconColor, point(2px, 2px) },
+	{ "chat/ai_star2-20x20", menuIconColor, point(2px, 2px) },
+};
+
+inChannelBadgeIcon: icon {{ "purr/channel", msgInDateFg }};
+inChannelBadgeSelectedIcon: icon {{ "purr/channel", msgInDateFgSelected }};
+outChannelBadgeIcon: icon {{ "purr/channel", msgOutDateFg }};
+outChannelBadgeSelectedIcon: icon {{ "purr/channel", msgOutDateFgSelected }};
+
+infoExteraOfficialBadge: icon {{ "purr/extera_official", profileVerifiedCheckBg }};
+infoExteraSupporterBadge: icon {{ "purr/extera_badge", profileVerifiedCheckBg }};
+
+winEnterWithGuestIcon: icon {{ "purr/ghost_tray", windowFg }};
+
+editedIcon: IconEmoji{
+    icon: icon{{ "purr/edited", windowFg }};
+    padding: margins(0px, 0px, 0px, 0px);
+    useIconColor: false;
+}
+
+deletedIcon: IconEmoji{
+    icon: icon{{ "purr/trash_bin", windowFg }};
+    padding: margins(0px, 0px, 0px, 0px);
+    useIconColor: false;
+}
+
+burntIcon: IconEmoji{
+    icon: icon{{ "purr/burnt", windowFg }};
+    padding: margins(0px, 0px, 0px, 0px);
+    useIconColor: false;
+}
+
+dialogsExteraOfficialIcon: ThreeStateIcon {
+	icon: icon {{ "purr/dialogs_extera_official", dialogsVerifiedIconBg }};
+	over: icon {{ "purr/dialogs_extera_official", dialogsVerifiedIconBgOver }};
+	active: icon {{ "purr/dialogs_extera_official", dialogsVerifiedIconBgActive }};
+}
+dialogsExteraSupporterIcon: ThreeStateIcon {
+	icon: icon {{ "purr/dialogs_extera_supporter", dialogsVerifiedIconBg }};
+	over: icon {{ "purr/dialogs_extera_supporter", dialogsVerifiedIconBgOver }};
+	active: icon {{ "purr/dialogs_extera_supporter", dialogsVerifiedIconBgActive }};
+}
+
+purrHistoryFileInPlugin: icon {{ "purr/history_file_plugin", historyFileInIconFg }};
+purrHistoryFileInPluginSelected: icon {{ "purr/history_file_plugin", historyFileInIconFgSelected }};
+purrHistoryFileOutPlugin: icon {{ "purr/history_file_plugin", historyFileOutIconFg }};
+purrHistoryFileOutPluginSelected: icon {{ "purr/history_file_plugin", historyFileOutIconFgSelected }};
+
+menuIconClearAttention: icon {{ "menu/clear", menuIconAttentionColor }};

@@ -474,6 +474,7 @@ void BottomInfo::layout() {
 void BottomInfo::layoutDateText() {
 	const auto editedPrimary = (_data.flags & Data::Flag::EditedPrimary)
 		&& !(_data.flags & Data::Flag::ForwardedDate);
+	const auto purrDeleted = (_data.flags & Data::Flag::PurrDeleted);
 	const auto edited = editedPrimary
 		? QString()
 		: (_data.flags & Data::Flag::Edited)
@@ -483,11 +484,14 @@ void BottomInfo::layoutDateText() {
 		: _data.scheduleRepeatPeriod
 		? (SchedulePeriodText(_data.scheduleRepeatPeriod) + ' ')
 		: QString();
+	const auto deletedMark = purrDeleted
+		? (QString::fromUtf8("\xf0\x9f\xa7\xb9") + ' ')
+		: QString();
 	const auto author = _data.author;
 	const auto prefix = !author.isEmpty() ? u", "_q : QString();
 	const auto date = editedPrimary
 		? FormatEditedDate(_data.date, _data.editedDate)
-		: edited + ((_data.flags & Data::Flag::ForwardedDate)
+		: deletedMark + edited + ((_data.flags & Data::Flag::ForwardedDate)
 		? Ui::FormatDateTimeSavedFrom(_data.date)
 		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
 	const auto afterAuthor = prefix + date;
@@ -713,6 +717,9 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 	}
 	if (item->awaitingVideoProcessing()) {
 		result.flags |= Flag::EstimateDate;
+	}
+	if (item->isDeleted()) {
+		result.flags |= Flag::PurrDeleted;
 	}
 	if (item->isScheduled()) {
 		result.scheduleRepeatPeriod = item->scheduleRepeatPeriod();

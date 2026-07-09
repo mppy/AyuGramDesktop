@@ -89,158 +89,158 @@ PRIVATE
     desktop-app::external_openssl
     desktop-app::external_openal
     desktop-app::external_xxhash
-    ayugram::lib_icu
+    purrgram::lib_icu
 )
 
-set(ayugram_files
-    ayu/ayu_worker.cpp
-    ayu/ayu_worker.h
-    ayu/ayu_url_handlers.cpp
-    ayu/ayu_url_handlers.h
-    ayu/ayu_state.cpp
-    ayu/ayu_state.h
-    ayu/ayu_settings.cpp
-    ayu/ayu_settings.h
-    ayu/ayu_ui_settings.h
-    ayu/ayu_lang.cpp
-    ayu/ayu_lang.h
-    ayu/ayu_infra.cpp
-    ayu/ayu_infra.h
-    ayu/utils/ayu_mapper.cpp
-    ayu/utils/ayu_mapper.h
-    ayu/utils/qt_key_modifiers_extended.h
-    ayu/utils/telegram_helpers.cpp
-    ayu/utils/telegram_helpers.h
-    ayu/utils/windows_utils.cpp
-    ayu/utils/windows_utils.h
-    ayu/utils/rc_manager.cpp
-    ayu/utils/rc_manager.h
-    ayu/utils/taptic_engine/taptic_engine.cpp
-    ayu/utils/taptic_engine/taptic_engine.h
-    ayu/utils/taptic_engine/platform/taptic_engine_dummy.cpp
-    ayu/utils/taptic_engine/platform/taptic_engine_dummy.h
-    ayu/utils/taptic_engine/platform/taptic_engine_mac.mm
-    ayu/utils/taptic_engine/platform/taptic_engine_mac.h
-    ayu/ui/ayu_logo.cpp
-    ayu/ui/ayu_logo.h
-    ayu/ui/toasts.cpp
-    ayu/ui/toasts.h
-    ayu/ui/ayu_userpic.cpp
-    ayu/ui/ayu_userpic.h
-    ayu/ui/utils/ayu_profile_values.cpp
-    ayu/ui/utils/ayu_profile_values.h
-    ayu/ui/utils/color_cut_quantizer.cpp
-    ayu/ui/utils/color_cut_quantizer.h
-    ayu/ui/utils/color_utils.cpp
-    ayu/ui/utils/color_utils.h
-    ayu/ui/utils/palette.cpp
-    ayu/ui/utils/palette.h
-    ayu/ui/utils/itunes_search.cpp
-    ayu/ui/utils/itunes_search.h
-    ayu/ui/settings/ayu_builder.cpp
-    ayu/ui/settings/ayu_builder.h
-    ayu/ui/settings/settings_appearance.cpp
-    ayu/ui/settings/settings_appearance.h
-    ayu/ui/settings/settings_ayu_utils.cpp
-    ayu/ui/settings/settings_ayu_utils.h
-    ayu/ui/settings/settings_chats.cpp
-    ayu/ui/settings/settings_chats.h
-    ayu/ui/settings/settings_general.cpp
-    ayu/ui/settings/settings_general.h
-    ayu/ui/settings/settings_ayu.cpp
-    ayu/ui/settings/settings_ayu.h
-    ayu/ui/settings/settings_filters.cpp
-    ayu/ui/settings/settings_filters.h
-    ayu/ui/settings/settings_main.cpp
-    ayu/ui/settings/settings_main.h
-    ayu/ui/settings/settings_other.cpp
-    ayu/ui/settings/settings_other.h
-    ayu/ui/settings/filters/settings_filters_list.cpp
-    ayu/ui/settings/filters/settings_filters_list.h
-    ayu/ui/settings/filters/per_dialog_filter.cpp
-    ayu/ui/settings/filters/per_dialog_filter.h
-    ayu/ui/settings/filters/edit_filter.cpp
-    ayu/ui/settings/filters/edit_filter.h
-    ayu/ui/context_menu/context_menu.cpp
-    ayu/ui/context_menu/context_menu.h
-    ayu/ui/context_menu/menu_item_subtext.cpp
-    ayu/ui/context_menu/menu_item_subtext.h
-    ayu/ui/message_history/history_inner.cpp
-    ayu/ui/message_history/history_inner.h
-    ayu/ui/message_history/history_item.cpp
-    ayu/ui/message_history/history_item.h
-    ayu/ui/message_history/history_section.cpp
-    ayu/ui/message_history/history_section.h
-    ayu/ui/boxes/edit_mark_box.cpp
-    ayu/ui/boxes/edit_mark_box.h
-    ayu/ui/boxes/font_selector.cpp
-    ayu/ui/boxes/font_selector.h
-    ayu/ui/boxes/import_filters_box.cpp
-    ayu/ui/boxes/import_filters_box.h
-    ayu/ui/boxes/theme_selector_box.cpp
-    ayu/ui/boxes/theme_selector_box.h
-    ayu/ui/boxes/message_shot_box.cpp
-    ayu/ui/boxes/message_shot_box.h
-    ayu/ui/boxes/donate_qr_box.cpp
-    ayu/ui/boxes/donate_qr_box.h
-    ayu/ui/boxes/donate_info_box.cpp
-    ayu/ui/boxes/donate_info_box.h
-    ayu/ui/boxes/plugin_info_box.cpp
-    ayu/ui/boxes/plugin_info_box.h
-    ayu/ui/components/image_view.cpp
-    ayu/ui/components/image_view.h
-    ayu/ui/components/icon_picker.cpp
-    ayu/ui/components/icon_picker.h
-    ayu/ui/components/avatar_corners_preview.cpp
-    ayu/ui/components/avatar_corners_preview.h
-    ayu/ui/components/message_preview.cpp
-    ayu/ui/components/message_preview.h
-    ayu/ui/components/saved_music.cpp
-    ayu/ui/components/saved_music.h
-    ayu/libs/json.hpp
-    ayu/libs/json_ext.hpp
-    ayu/libs/sqlite/sqlite3.c
-    ayu/libs/sqlite/sqlite3.h
-    ayu/libs/sqlite/sqlite_orm.h
-    ayu/features/streamer_mode/platform/streamer_mode_win.cpp
-    ayu/features/streamer_mode/platform/streamer_mode_win.h
-    ayu/features/streamer_mode/platform/streamer_mode_linux.cpp
-    ayu/features/streamer_mode/platform/streamer_mode_linux.h
-    ayu/features/streamer_mode/platform/streamer_mode_mac.mm
-    ayu/features/streamer_mode/platform/streamer_mode_mac.h
-    ayu/features/streamer_mode/streamer_mode.cpp
-    ayu/features/streamer_mode/streamer_mode.h
-    ayu/features/message_shot/message_shot.cpp
-    ayu/features/message_shot/message_shot.h
-    ayu/features/message_shot/message_shot_theme_state.cpp
-    ayu/features/message_shot/message_shot_theme_state.h
-    ayu/features/forward/ayu_forward.cpp
-    ayu/features/forward/ayu_forward.h
-    ayu/features/forward/ayu_sync.cpp
-    ayu/features/forward/ayu_sync.h
-    ayu/features/translator/ayu_translator.cpp
-    ayu/features/translator/ayu_translator.h
-    ayu/features/translator/ayu_translate_provider.cpp
-    ayu/features/translator/ayu_translate_provider.h
-    ayu/features/translator/html_parser.cpp
-    ayu/features/translator/html_parser.h
-    ayu/features/translator/implementations/google.cpp
-    ayu/features/translator/implementations/google.h
-    ayu/features/translator/implementations/yandex.cpp
-    ayu/features/translator/implementations/yandex.h
-    ayu/features/translator/implementations/base.cpp
-    ayu/features/translator/implementations/base.h
-    ayu/features/filters/filters_controller.cpp
-    ayu/features/filters/filters_controller.h
-    ayu/features/filters/filters_cache_controller.cpp
-    ayu/features/filters/filters_cache_controller.h
-    ayu/features/filters/filters_utils.cpp
-    ayu/features/filters/filters_utils.h
-    ayu/data/messages_storage.cpp
-    ayu/data/messages_storage.h
-    ayu/data/entities.h
-    ayu/data/ayu_database.cpp
-    ayu/data/ayu_database.h
+set(purrgram_files
+    purr/purr_worker.cpp
+    purr/purr_worker.h
+    purr/purr_url_handlers.cpp
+    purr/purr_url_handlers.h
+    purr/purr_state.cpp
+    purr/purr_state.h
+    purr/purr_settings.cpp
+    purr/purr_settings.h
+    purr/purr_ui_settings.h
+    purr/purr_lang.cpp
+    purr/purr_lang.h
+    purr/purr_infra.cpp
+    purr/purr_infra.h
+    purr/utils/purr_mapper.cpp
+    purr/utils/purr_mapper.h
+    purr/utils/qt_key_modifiers_extended.h
+    purr/utils/telegram_helpers.cpp
+    purr/utils/telegram_helpers.h
+    purr/utils/windows_utils.cpp
+    purr/utils/windows_utils.h
+    purr/utils/rc_manager.cpp
+    purr/utils/rc_manager.h
+    purr/utils/taptic_engine/taptic_engine.cpp
+    purr/utils/taptic_engine/taptic_engine.h
+    purr/utils/taptic_engine/platform/taptic_engine_dummy.cpp
+    purr/utils/taptic_engine/platform/taptic_engine_dummy.h
+    purr/utils/taptic_engine/platform/taptic_engine_mac.mm
+    purr/utils/taptic_engine/platform/taptic_engine_mac.h
+    purr/ui/purr_logo.cpp
+    purr/ui/purr_logo.h
+    purr/ui/toasts.cpp
+    purr/ui/toasts.h
+    purr/ui/purr_userpic.cpp
+    purr/ui/purr_userpic.h
+    purr/ui/utils/purr_profile_values.cpp
+    purr/ui/utils/purr_profile_values.h
+    purr/ui/utils/color_cut_quantizer.cpp
+    purr/ui/utils/color_cut_quantizer.h
+    purr/ui/utils/color_utils.cpp
+    purr/ui/utils/color_utils.h
+    purr/ui/utils/palette.cpp
+    purr/ui/utils/palette.h
+    purr/ui/utils/itunes_search.cpp
+    purr/ui/utils/itunes_search.h
+    purr/ui/settings/purr_builder.cpp
+    purr/ui/settings/purr_builder.h
+    purr/ui/settings/settings_appearance.cpp
+    purr/ui/settings/settings_appearance.h
+    purr/ui/settings/settings_purr_utils.cpp
+    purr/ui/settings/settings_purr_utils.h
+    purr/ui/settings/settings_chats.cpp
+    purr/ui/settings/settings_chats.h
+    purr/ui/settings/settings_general.cpp
+    purr/ui/settings/settings_general.h
+    purr/ui/settings/settings_purr.cpp
+    purr/ui/settings/settings_purr.h
+    purr/ui/settings/settings_filters.cpp
+    purr/ui/settings/settings_filters.h
+    purr/ui/settings/settings_main.cpp
+    purr/ui/settings/settings_main.h
+    purr/ui/settings/settings_other.cpp
+    purr/ui/settings/settings_other.h
+    purr/ui/settings/filters/settings_filters_list.cpp
+    purr/ui/settings/filters/settings_filters_list.h
+    purr/ui/settings/filters/per_dialog_filter.cpp
+    purr/ui/settings/filters/per_dialog_filter.h
+    purr/ui/settings/filters/edit_filter.cpp
+    purr/ui/settings/filters/edit_filter.h
+    purr/ui/context_menu/context_menu.cpp
+    purr/ui/context_menu/context_menu.h
+    purr/ui/context_menu/menu_item_subtext.cpp
+    purr/ui/context_menu/menu_item_subtext.h
+    purr/ui/message_history/history_inner.cpp
+    purr/ui/message_history/history_inner.h
+    purr/ui/message_history/history_item.cpp
+    purr/ui/message_history/history_item.h
+    purr/ui/message_history/history_section.cpp
+    purr/ui/message_history/history_section.h
+    purr/ui/boxes/edit_mark_box.cpp
+    purr/ui/boxes/edit_mark_box.h
+    purr/ui/boxes/font_selector.cpp
+    purr/ui/boxes/font_selector.h
+    purr/ui/boxes/import_filters_box.cpp
+    purr/ui/boxes/import_filters_box.h
+    purr/ui/boxes/theme_selector_box.cpp
+    purr/ui/boxes/theme_selector_box.h
+    purr/ui/boxes/message_shot_box.cpp
+    purr/ui/boxes/message_shot_box.h
+    purr/ui/boxes/donate_qr_box.cpp
+    purr/ui/boxes/donate_qr_box.h
+    purr/ui/boxes/donate_info_box.cpp
+    purr/ui/boxes/donate_info_box.h
+    purr/ui/boxes/plugin_info_box.cpp
+    purr/ui/boxes/plugin_info_box.h
+    purr/ui/components/image_view.cpp
+    purr/ui/components/image_view.h
+    purr/ui/components/icon_picker.cpp
+    purr/ui/components/icon_picker.h
+    purr/ui/components/avatar_corners_preview.cpp
+    purr/ui/components/avatar_corners_preview.h
+    purr/ui/components/message_preview.cpp
+    purr/ui/components/message_preview.h
+    purr/ui/components/saved_music.cpp
+    purr/ui/components/saved_music.h
+    purr/libs/json.hpp
+    purr/libs/json_ext.hpp
+    purr/libs/sqlite/sqlite3.c
+    purr/libs/sqlite/sqlite3.h
+    purr/libs/sqlite/sqlite_orm.h
+    purr/features/streamer_mode/platform/streamer_mode_win.cpp
+    purr/features/streamer_mode/platform/streamer_mode_win.h
+    purr/features/streamer_mode/platform/streamer_mode_linux.cpp
+    purr/features/streamer_mode/platform/streamer_mode_linux.h
+    purr/features/streamer_mode/platform/streamer_mode_mac.mm
+    purr/features/streamer_mode/platform/streamer_mode_mac.h
+    purr/features/streamer_mode/streamer_mode.cpp
+    purr/features/streamer_mode/streamer_mode.h
+    purr/features/message_shot/message_shot.cpp
+    purr/features/message_shot/message_shot.h
+    purr/features/message_shot/message_shot_theme_state.cpp
+    purr/features/message_shot/message_shot_theme_state.h
+    purr/features/forward/purr_forward.cpp
+    purr/features/forward/purr_forward.h
+    purr/features/forward/purr_sync.cpp
+    purr/features/forward/purr_sync.h
+    purr/features/translator/purr_translator.cpp
+    purr/features/translator/purr_translator.h
+    purr/features/translator/purr_translate_provider.cpp
+    purr/features/translator/purr_translate_provider.h
+    purr/features/translator/html_parser.cpp
+    purr/features/translator/html_parser.h
+    purr/features/translator/implementations/google.cpp
+    purr/features/translator/implementations/google.h
+    purr/features/translator/implementations/yandex.cpp
+    purr/features/translator/implementations/yandex.h
+    purr/features/translator/implementations/base.cpp
+    purr/features/translator/implementations/base.h
+    purr/features/filters/filters_controller.cpp
+    purr/features/filters/filters_controller.h
+    purr/features/filters/filters_cache_controller.cpp
+    purr/features/filters/filters_cache_controller.h
+    purr/features/filters/filters_utils.cpp
+    purr/features/filters/filters_utils.h
+    purr/data/messages_storage.cpp
+    purr/data/messages_storage.h
+    purr/data/entities.h
+    purr/data/purr_database.cpp
+    purr/data/purr_database.h
 )
 
 if (NOT DESKTOP_APP_DISABLE_SWIFT6)
@@ -251,7 +251,7 @@ target_precompile_headers(Telegram PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${sr
 nice_target_sources(Telegram ${src_loc}
 PRIVATE
     ${style_files}
-    ${ayugram_files}
+    ${purrgram_files}
 
     api/api_attached_stickers.cpp
     api/api_attached_stickers.h
@@ -2162,7 +2162,7 @@ endif()
 
 nice_target_sources(Telegram ${res_loc}
 PRIVATE
-    qrc/ayu/ayu.qrc
+    qrc/purr/purr.qrc
 
     qrc/emoji_1.qrc
     qrc/emoji_2.qrc
@@ -2332,12 +2332,12 @@ if (build_macstore)
     )
 else()
     if (CMAKE_GENERATOR STREQUAL Xcode)
-        set(bundle_identifier "one.ayugram.AyuGramDesktop$<$<CONFIG:Debug>:Debug>")
+        set(bundle_identifier "one.purrgram.PurrGramDesktop$<$<CONFIG:Debug>:Debug>")
     else()
-        set(bundle_identifier "one.ayugram.AyuGramDesktop")
+        set(bundle_identifier "one.purrgram.PurrGramDesktop")
     endif()
     set(bundle_entitlements "Telegram.entitlements")
-    set(output_name "AyuGram")
+    set(output_name "PurrGram")
 endif()
 
 if (CMAKE_GENERATOR STREQUAL Xcode)
@@ -2384,7 +2384,7 @@ get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (APPLE
     OR is_multi_config
     OR NOT CMAKE_EXECUTABLE_SUFFIX STREQUAL ""
-    OR NOT "${output_name}" STREQUAL "AyuGram")
+    OR NOT "${output_name}" STREQUAL "PurrGram")
     set(output_folder ${CMAKE_BINARY_DIR})
 else()
     set(output_folder ${CMAKE_BINARY_DIR}/bin)

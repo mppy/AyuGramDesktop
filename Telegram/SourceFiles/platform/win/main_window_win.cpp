@@ -30,8 +30,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_controller.h"
 #include "history/history.h"
 
-#include "ayu/ayu_settings.h"
-#include "ayu/ui/ayu_logo.h"
+#include "purr/purr_settings.h"
+#include "purr/ui/purr_logo.h"
 #include "platform/win/windows_app_user_model_id.h"
 
 #include <QtWidgets/QStyleFactory>
@@ -135,7 +135,7 @@ void UpdateTaskbarRelaunchIcon(HWND hWnd) {
 	setString(AppUserModelId::Key(), AppUserModelId::Id());
 	setString(
 		PKEY_AppUserModel_RelaunchIconResource,
-		QDir::toNativeSeparators(AyuAssets::appIcoPath()).toStdWString()
+		QDir::toNativeSeparators(PurrAssets::appIcoPath()).toStdWString()
 			+ L",0");
 	propertyStore->Commit();
 }
@@ -634,7 +634,7 @@ void MainWindow::unreadCounterChangedHook() {
 }
 
 void MainWindow::updateTaskbarAndIconCounters() {
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 	const auto counter = settings.hideNotificationBadge()
 		? 0
 		: Core::App().unreadBadge();

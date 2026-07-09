@@ -22,7 +22,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_custom_emoji.h"
 #include "main/main_session.h"
 #include "styles/style_info.h"
-#include "styles/style_ayu_icons.h"
+#include "styles/style_purr_icons.h"
 
 namespace Info::Profile {
 namespace {

@@ -74,7 +74,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "platform/platform_notifications_manager.h"
 #include "spellcheck/spellcheck_highlight_syntax.h"
 
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 
 namespace {
 
@@ -2097,7 +2097,7 @@ bool HistoryItem::isSponsored() const {
 	return _flags & MessageFlag::Sponsored;
 }
 
-bool HistoryItem::isAyuNoForwards() const {
+bool HistoryItem::isPurrNoForwards() const {
 	return _flags & MessageFlag::NoForwards;
 }
 
@@ -3817,7 +3817,7 @@ void HistoryItem::setDeleted() {
 	}
 
 	if (isService()) {
-		setAyuHint(AyuSettings::getInstance().deletedMark());
+		setPurrHint(PurrSettings::getInstance().deletedMark());
 	} else {
 		history()->owner().requestItemViewRefresh(this);
 		history()->owner().requestItemResize(this);
@@ -3841,7 +3841,7 @@ void HistoryItem::markDeletedAnimated() {
 	_deletedAnimated = false;
 }
 
-void HistoryItem::setAyuHint(const QString &hint) {
+void HistoryItem::setPurrHint(const QString &hint) {
 	auto msgsigned = Get<HistoryMessageSigned>();
 	if (hint.isEmpty()) {
 		if (!msgsigned) {

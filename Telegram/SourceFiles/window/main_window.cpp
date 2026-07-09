@@ -45,7 +45,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_window.h"
 #include "styles/style_dialogs.h" // ChildSkip().x() for new child windows.
 
-#include "ayu/ui/ayu_logo.h"
+#include "purr/ui/purr_logo.h"
 
 #ifdef Q_OS_MAC
 #include "platform/mac/global_menu_mac.h"
@@ -125,11 +125,11 @@ const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
 const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 QImage Logo() {
-	return AyuAssets::currentAppLogo();
+	return PurrAssets::currentAppLogo();
 }
 
 QImage LogoNoMargin() {
-	return AyuAssets::currentAppLogo();
+	return PurrAssets::currentAppLogo();
 }
 
 void ConvertIconToBlack(QImage &image) {
@@ -184,7 +184,7 @@ void OverrideApplicationIcon(QImage image) {
 }
 
 QIcon CreateOfficialIcon(Main::Session *session) {
-	return QIcon(Ui::PixmapFromImage(AyuAssets::currentAppLogo()));
+	return QIcon(Ui::PixmapFromImage(PurrAssets::currentAppLogo()));
 }
 
 QIcon CreateIcon(Main::Session *session, bool returnNullIfDefault) {

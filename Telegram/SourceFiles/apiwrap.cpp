@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "apiwrap.h"
 
+#include <thread>
+
 #include "api/api_authorizations.h"
 #include "api/api_attached_stickers.h"
 #include "api/api_blocked_peers.h"
@@ -100,7 +102,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/file_upload.h"
 #include "storage/storage_account.h"
 
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
+#include "purr/features/forward/purr_forward.h"
 
 namespace {
 
@@ -470,7 +473,7 @@ void ApiWrap::toggleHistoryArchived(
 		if (archived) {
 			history->setFolder(_session->data().folder(archiveId));
 		} else {
-			const auto &settings = AyuSettings::getInstance();
+			const auto &settings = PurrSettings::getInstance();
 			if (settings.hideAllChatsFolder()) {
 				if (const auto window = Core::App().activeWindow()) {
 					if (const auto controller = window->sessionController()) {
@@ -3541,6 +3544,19 @@ void ApiWrap::forwardMessages(
 		SendAction action,
 		FnMut<void()> &&successCallback) {
 	Expects(!draft.items.empty());
+
+	// PurrGram: intercept restricted/noforwards/deleted/TTL forwards
+	if (PurrForward::isPurrForwardNeeded(draft.items)) {
+		// Run on background thread — intelligentForward downloads media
+		// synchronously which would freeze the UI if run on main thread.
+		std::thread([=] {
+			PurrForward::intelligentForward(_session, action, draft);
+		}).detach();
+		if (successCallback) {
+			successCallback();
+		}
+		return;
+	}
 
 	auto &histories = _session->data().histories();
 

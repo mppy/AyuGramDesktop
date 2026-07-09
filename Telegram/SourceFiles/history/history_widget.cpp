@@ -103,6 +103,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item_helpers.h" // GetErrorForSending.
 #include "history/history_drag_area.h"
 #include "history/history_inner_widget.h"
+#include "purr/features/message_shot/message_shot.h"
 #include "history/history_item_components.h"
 #include "history/history_streamed_drafts.h"
 #include "history/history_unread_things.h"
@@ -1041,6 +1042,12 @@ HistoryWidget::HistoryWidget(
 	_topBar->deleteSelectionRequest(
 	) | rpl::on_next([=] {
 		confirmDeleteSelected();
+	}, _topBar->lifetime());
+	_topBar->messageShotSelectionRequest(
+	) | rpl::on_next([=] {
+		if (_list) {
+			PurrFeatures::MessageShot::Wrapper(_list.data(), [=] { clearSelected(); });
+		}
 	}, _topBar->lifetime());
 	_topBar->clearSelectionRequest(
 	) | rpl::on_next([=] {

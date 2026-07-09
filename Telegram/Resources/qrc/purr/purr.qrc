@@ -1,0 +1,36 @@
+<RCC>
+    <qresource prefix="/gui">
+        <file alias="art/purr/alt/app.svg">../../art/purr/alt/app.svg</file>
+        <file alias="art/purr/alt/app_icon.ico">../../art/purr/alt/app_icon.ico</file>
+        <file alias="art/purr/bard/app.svg">../../art/purr/bard/app.svg</file>
+        <file alias="art/purr/bard/app_icon.ico">../../art/purr/bard/app_icon.ico</file>
+        <file alias="art/purr/chibi/app.png">../../art/purr/chibi/app.png</file>
+        <file alias="art/purr/chibi/app_icon.ico">../../art/purr/chibi/app_icon.ico</file>
+        <file alias="art/purr/chibi2/app.png">../../art/purr/chibi2/app.png</file>
+        <file alias="art/purr/chibi2/app_icon.ico">../../art/purr/chibi2/app_icon.ico</file>
+        <file alias="art/purr/default/app.svg">../../art/purr/default/app.svg</file>
+        <file alias="art/purr/default/app_icon.ico">../../art/purr/default/app_icon.ico</file>
+        <file alias="art/purr/discord/app.svg">../../art/purr/discord/app.svg</file>
+        <file alias="art/purr/discord/app_icon.ico">../../art/purr/discord/app_icon.ico</file>
+        <file alias="art/purr/extera/app.svg">../../art/purr/extera/app.svg</file>
+        <file alias="art/purr/extera/app_icon.ico">../../art/purr/extera/app_icon.ico</file>
+        <file alias="art/purr/extera2/app.svg">../../art/purr/extera2/app.svg</file>
+        <file alias="art/purr/extera2/app_icon.ico">../../art/purr/extera2/app_icon.ico</file>
+        <file alias="art/purr/nothing/app.svg">../../art/purr/nothing/app.svg</file>
+        <file alias="art/purr/nothing/app_icon.ico">../../art/purr/nothing/app_icon.ico</file>
+        <file alias="art/purr/spotify/app.svg">../../art/purr/spotify/app.svg</file>
+        <file alias="art/purr/spotify/app_icon.ico">../../art/purr/spotify/app_icon.ico</file>
+        <file alias="art/purr/win95/app.png">../../art/purr/win95/app.png</file>
+        <file alias="art/purr/win95/app_icon.ico">../../art/purr/win95/app_icon.ico</file>
+        <file alias="art/purr/yaplus/app.svg">../../art/purr/yaplus/app.svg</file>
+        <file alias="art/purr/yaplus/app_icon.ico">../../art/purr/yaplus/app_icon.ico</file>
+        <file alias="icons/purr/nocover.svg">../../icons/purr/nocover.svg</file>
+        <file alias="icons/purr/donates/boosty.svg">../../icons/purr/donates/boosty.svg</file>
+        <file alias="icons/purr/donates/ton.svg">../../icons/purr/donates/ton.svg</file>
+        <file alias="icons/purr/donates/bitcoin.svg">../../icons/purr/donates/bitcoin.svg</file>
+        <file alias="icons/purr/donates/ethereum.svg">../../icons/purr/donates/ethereum.svg</file>
+        <file alias="icons/purr/donates/solana.svg">../../icons/purr/donates/solana.svg</file>
+        <file alias="icons/purr/donates/tron.svg">../../icons/purr/donates/tron.svg</file>
+        <file alias="icons/purr/donates/support_logo.svg">../../icons/purr/donates/support_logo.svg</file>
+    </qresource>
+</RCC>

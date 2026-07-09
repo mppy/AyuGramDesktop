@@ -74,10 +74,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_settings.h"
 #include "styles/style_window.h"
 
-#include "ayu/ayu_settings.h"
-#include "ayu/features/streamer_mode/streamer_mode.h"
-#include "ayu/utils/telegram_helpers.h"
-#include "styles/style_ayu_icons.h"
+#include "purr/purr_settings.h"
+#include "purr/features/streamer_mode/streamer_mode.h"
+#include "purr/utils/telegram_helpers.h"
+#include "styles/style_purr_icons.h"
 #include "lang_auto.h"
 
 #include <QtGui/QWindow>
@@ -655,7 +655,7 @@ void MainMenu::showFinished() {
 void MainMenu::setupMenu() {
 	using namespace Settings;
 
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 
 	const auto controller = _controller;
 	const auto addAction = [&](
@@ -741,10 +741,10 @@ void MainMenu::setupMenu() {
 
 		if (settings.showLReadToggleInDrawer()) {
 			addAction(
-				tr::ayu_LReadMessages(),
-				{ &st::ayuLReadMenuIcon }
+				tr::purr_LReadMessages(),
+				{ &st::purrLReadMenuIcon }
 			)->setClickedCallback([=] {
-				auto &ghost = AyuSettings::ghost(&controller->session());
+				auto &ghost = PurrSettings::ghost(&controller->session());
 				const auto previous = ghost.sendReadMessages();
 				ghost.setSendReadMessages(false);
 				MarkAsReadChatList(controller->session().data().chatsList());
@@ -754,24 +754,24 @@ void MainMenu::setupMenu() {
 
 		if (settings.showSReadToggleInDrawer()) {
 			const auto callback = [=](Fn<void()> close) {
-				auto &ghost = AyuSettings::ghost(&controller->session());
+				auto &ghost = PurrSettings::ghost(&controller->session());
 				const auto previous = ghost.sendReadMessages();
 				ghost.setSendReadMessages(true);
 				MarkAsReadChatList(controller->session().data().chatsList());
 				dispatchToMainThread(crl::guard(controller, [=] {
-					auto &ghost = AyuSettings::ghost(&controller->session());
+					auto &ghost = PurrSettings::ghost(&controller->session());
 					ghost.setSendReadMessages(previous);
 				}), 200);
 				close();
 			};
 			addAction(
-				tr::ayu_SReadMessages(),
-				{ &st::ayuSReadMenuIcon }
+				tr::purr_SReadMessages(),
+				{ &st::purrSReadMenuIcon }
 			)->setClickedCallback([=] {
 				controller->show(Ui::MakeConfirmBox({
-					.text = tr::ayu_ReadConfirmationBoxQuestion(),
+					.text = tr::purr_ReadConfirmationBoxQuestion(),
 					.confirmed = callback,
-					.confirmText = tr::ayu_ReadConfirmationBoxActionText(),
+					.confirmText = tr::purr_ReadConfirmationBoxActionText(),
 				}));
 			});
 		}
@@ -848,33 +848,33 @@ void MainMenu::setupMenu() {
 	}
 
 	if (settings.showGhostToggleInDrawer()) {
-		auto ghostActiveChanges = AyuSettings::getInstance().useGlobalGhostModeValue(
+		auto ghostActiveChanges = PurrSettings::getInstance().useGlobalGhostModeValue(
 		) | rpl::map([controller = _controller](bool) {
-			return AyuSettings::ghost(&controller->session()).ghostModeActiveValue();
+			return PurrSettings::ghost(&controller->session()).ghostModeActiveValue();
 		}) | rpl::flatten_latest();
 
 		const auto toggle = addAction(
-			tr::ayu_GhostModeToggle(),
-			{ &st::ayuGhostIcon }
+			tr::purr_GhostModeToggle(),
+			{ &st::purrGhostIcon }
 		)->toggleOn(std::move(ghostActiveChanges));
 		toggle->toggledChanges(
 		) | rpl::on_next([controller = _controller](bool enabled) {
-			AyuSettings::ghost(&controller->session()).setGhostModeEnabled(enabled);
+			PurrSettings::ghost(&controller->session()).setGhostModeEnabled(enabled);
 		}, toggle->lifetime());
 	}
 
 #if defined Q_OS_WIN || defined Q_OS_MAC
 	if (settings.showStreamerToggleInDrawer()) {
 		const auto toggle = addAction(
-			tr::ayu_StreamerModeToggle(),
-			{ &st::ayuStreamerModeMenuIcon }
-		)->toggleOn(rpl::single(AyuFeatures::StreamerMode::isEnabled()));
+			tr::purr_StreamerModeToggle(),
+			{ &st::purrStreamerModeMenuIcon }
+		)->toggleOn(rpl::single(PurrFeatures::StreamerMode::isEnabled()));
 		toggle->toggledChanges(
 		) | rpl::on_next([](bool enabled) {
 			if (enabled) {
-				AyuFeatures::StreamerMode::enable();
+				PurrFeatures::StreamerMode::enable();
 			} else {
-				AyuFeatures::StreamerMode::disable();
+				PurrFeatures::StreamerMode::disable();
 			}
 		}, toggle->lifetime());
 	}

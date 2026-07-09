@@ -5,7 +5,10 @@ the official desktop application for the Telegram messaging service.
 For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
+#include <QFile>
+#include <QStandardPaths>
 #include "window/window_peer_menu.h"
+#include "purr/ui/context_menu/context_menu.h"
 
 #include "base/call_delayed.h"
 #include "menu/menu_check_item.h"
@@ -1759,6 +1762,38 @@ void Filler::fillContextMenuActions() {
 			addBlockUser();
 		}
 	}
+	// PurrGram: add PurrGram context menu (View Deleted, Filters, etc.)
+	PurrUi::AddPurrGramActions(
+		_peer,
+		_thread,
+		_controller,
+		_addAction);
+	// PurrGram: add peer-level actions
+	PurrUi::AddJumpToBeginningAction(
+		_peer,
+		_thread,
+		_controller,
+		_addAction);
+	PurrUi::AddOpenChannelAction(
+		_peer,
+		_controller,
+		_addAction);
+	PurrUi::AddShadowBanAction(
+		_peer,
+		_addAction);
+	if (const auto topic = _peer->isForum() && _thread ? _thread->asTopic() : nullptr) {
+		PurrUi::AddDeleteOwnMessagesAction(
+			_peer,
+			topic,
+			_controller,
+			_addAction);
+	} else {
+		PurrUi::AddDeleteOwnMessagesAction(
+			_peer,
+			nullptr,
+			_controller,
+			_addAction);
+	}
 	addClearHistory();
 	addDeleteChat();
 	addLeaveChat();
@@ -1783,6 +1818,34 @@ void Filler::fillHistoryActions() {
 	addExportChat();
 	addTranslate();
 	addReport();
+	// PurrGram: add PurrGram context menu in history actions too
+	PurrUi::AddPurrGramActions(
+		_peer,
+		_thread,
+		_controller,
+		_addAction);
+	// PurrGram: peer-level actions
+	PurrUi::AddJumpToBeginningAction(
+		_peer,
+		_thread,
+		_controller,
+		_addAction);
+	PurrUi::AddOpenChannelAction(
+		_peer,
+		_controller,
+		_addAction);
+	PurrUi::AddShadowBanAction(
+		_peer,
+		_addAction);
+	{
+		const auto topic = _peer->isForum() && _thread ? _thread->asTopic() : nullptr;
+		PurrUi::AddDeleteOwnMessagesAction(
+			_peer,
+			topic,
+			_controller,
+			_addAction);
+	}
+	_addAction(PeerMenuCallback::Args{ .isSeparator = true });
 	addClearHistory();
 	addDeleteChat();
 	addLeaveChat();

@@ -102,9 +102,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "media/player/media_player_instance.h"
 #include "spellcheck/spellcheck_types.h"
 #include "apiwrap.h"
+#include "purr/ui/context_menu/context_menu.h"
 #include "styles/style_chat.h"
 #include "styles/style_chat_helpers.h"
 #include "styles/style_menu_icons.h"
+#include <QFile>
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
@@ -1567,6 +1569,13 @@ void FillContextMenuItems(
 				list->controller());
 		}
 	}
+	result->addAction(u"PURR TEST - Message Details"_q, []{}, &st::menuIconInfo);
+	if (item) {
+		PurrUi::AddHistoryAction(result, item);
+		PurrUi::AddHideMessageAction(result, item);
+		PurrUi::AddUserMessagesAction(result, item);
+		PurrUi::AddMessageDetailsAction(result, item);
+	}
 }
 
 base::unique_qptr<Ui::PopupMenu> FillContextMenu(
@@ -1586,6 +1595,13 @@ base::unique_qptr<Ui::PopupMenu> FillContextMenu(
 
 	// Build the full message menu.
 	FillContextMenuItems(result, list, request, hasPollOption);
+
+	QFile log("D:/TBuild/purr_debug.log");
+	if (log.open(QIODevice::WriteOnly | QIODevice::Append)) {
+		log.write("FillContextMenu CALLED\n");
+		log.close();
+	}
+	result->addAction(u"PURR TEST"_q, []{}, &st::menuIconInfo);
 
 	if (item) {
 		const auto media = item->media();

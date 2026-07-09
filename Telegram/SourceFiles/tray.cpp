@@ -14,8 +14,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "platform/platform_specific.h"
 #include "lang/lang_keys.h"
 
-#include "ayu/ayu_settings.h"
-#include "ayu/features/streamer_mode/streamer_mode.h"
+#include "purr/purr_settings.h"
+#include "purr/features/streamer_mode/streamer_mode.h"
 #include "lang_auto.h"
 
 #include <QtWidgets/QApplication>
@@ -104,11 +104,11 @@ void Tray::rebuildMenu() {
 			[=] { toggleSoundNotifications(); });
 	}
 
-	const auto &settings = AyuSettings::getInstance();
+	const auto &settings = PurrSettings::getInstance();
 	if (settings.showGhostToggleInTray()) {
-		auto ghostActiveChanges = AyuSettings::getInstance().useGlobalGhostModeValue(
+		auto ghostActiveChanges = PurrSettings::getInstance().useGlobalGhostModeValue(
 		) | rpl::map([](bool) {
-			return AyuSettings::ghost().ghostModeActiveValue();
+			return PurrSettings::ghost().ghostModeActiveValue();
 		}) | rpl::flatten_latest();
 
 		auto text = rpl::combine(
@@ -116,11 +116,11 @@ void Tray::rebuildMenu() {
 			std::move(ghostActiveChanges)
 		) | rpl::map([](auto, bool active) {
 			return active
-				? tr::ayu_DisableGhostModeTray(tr::now)
-				: tr::ayu_EnableGhostModeTray(tr::now);
+				? tr::purr_DisableGhostModeTray(tr::now)
+				: tr::purr_EnableGhostModeTray(tr::now);
 		});
 		_tray.addAction(std::move(text), [=] {
-			auto &ghost = AyuSettings::ghost();
+			auto &ghost = PurrSettings::ghost();
 			ghost.setGhostModeEnabled(!ghost.isGhostModeActive());
 			updateMenuText();
 		});
@@ -129,15 +129,15 @@ void Tray::rebuildMenu() {
 	if (settings.showStreamerToggleInTray()) {
 		auto text = _textUpdates.events_starting_with({}
 		) | rpl::map([] {
-			return AyuFeatures::StreamerMode::isEnabled()
-				? tr::ayu_DisableStreamerModeTray(tr::now)
-				: tr::ayu_EnableStreamerModeTray(tr::now);
+			return PurrFeatures::StreamerMode::isEnabled()
+				? tr::purr_DisableStreamerModeTray(tr::now)
+				: tr::purr_EnableStreamerModeTray(tr::now);
 		});
 		_tray.addAction(std::move(text), [=] {
-			if (AyuFeatures::StreamerMode::isEnabled()) {
-				AyuFeatures::StreamerMode::disable();
+			if (PurrFeatures::StreamerMode::isEnabled()) {
+				PurrFeatures::StreamerMode::disable();
 			} else {
-				AyuFeatures::StreamerMode::enable();
+				PurrFeatures::StreamerMode::enable();
 			}
 			updateMenuText();
 		});

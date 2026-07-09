@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "main/main_session.h"
+#include "purr/purr_settings.h"
 
 #include "apiwrap.h"
 #include "api/api_peer_colors.h"
@@ -341,10 +342,18 @@ rpl::producer<> Session::downloaderTaskFinished() const {
 }
 
 bool Session::premium() const {
+	const auto &settings = PurrSettings::getInstance();
+	if (settings.localPremium()) {
+		return true;
+	}
 	return _user->isPremium();
 }
 
 bool Session::premiumPossible() const {
+	const auto &settings = PurrSettings::getInstance();
+	if (settings.localPremium()) {
+		return true;
+	}
 	return premium() || premiumCanBuy();
 }
 

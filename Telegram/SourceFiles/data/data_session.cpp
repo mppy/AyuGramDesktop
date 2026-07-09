@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/data_session.h"
+#include "purr/utils/telegram_helpers.h"
 
 #include "main/main_session.h"
 #include "main/main_session_settings.h"
@@ -902,7 +903,8 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 			| Flag::Forbidden
 			| Flag::CallActive
 			| Flag::CallNotEmpty
-			| Flag::NoForwards;
+			| Flag::NoForwards
+			| Flag::AyuNoForwards;
 		const auto flagsSet = (data.is_left() ? Flag::Left : Flag())
 			| (data.is_creator() ? Flag::Creator : Flag())
 			| (data.is_deactivated() ? Flag::Deactivated : Flag())
@@ -912,7 +914,8 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 					&& chat->groupCall()->fullCount() > 0))
 				? Flag::CallNotEmpty
 				: Flag())
-			| (data.is_noforwards() ? Flag::NoForwards : Flag());
+			| (data.is_noforwards() ? Flag::NoForwards : Flag())
+			| (data.is_ayuNoforwards() ? Flag::AyuNoForwards : Flag());
 		chat->setFlags((chat->flags() & ~flagsMask) | flagsSet);
 		chat->count = data.vparticipants_count().v;
 
@@ -1025,6 +1028,7 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 				? (Flag::Left | Flag::Creator)
 				: Flag())
 			| Flag::NoForwards
+			| Flag::AyuNoForwards
 			| Flag::JoinToWrite
 			| Flag::RequestToJoin
 			| Flag::Forum
@@ -1075,6 +1079,7 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 					| (data.is_creator() ? Flag::Creator : Flag()))
 				: Flag())
 			| (data.is_noforwards() ? Flag::NoForwards : Flag())
+			| (data.is_ayuNoforwards() ? Flag::AyuNoForwards : Flag())
 			| (data.is_join_to_send() ? Flag::JoinToWrite : Flag())
 			| (data.is_join_request() ? Flag::RequestToJoin : Flag())
 			| ((data.is_forum() && data.is_megagroup())
@@ -2978,22 +2983,17 @@ void Session::processMessagesDeleted(
 		return;
 	}
 
-	auto toDestroy = std::vector<not_null<HistoryItem*>>();
 	auto historiesToCheck = base::flat_set<not_null<History*>>();
 	for (const auto &messageId : data) {
 		const auto i = list ? list->find(messageId.v) : Messages::iterator();
 		if (list && i != list->end()) {
 			const auto history = i->second->history();
-			toDestroy.push_back(i->second);
-			historiesToCheck.emplace(history);
+			processMessageDelete(i->second);
+			if (!history->chatListMessageKnown()) {
+				historiesToCheck.emplace(history);
+			}
 		} else if (affected) {
 			affected->unknownMessageDeleted(messageId.v);
-		}
-	}
-	if (!toDestroy.empty()) {
-		notifyItemsAboutToBeDestroyed(toDestroy);
-		for (const auto &item : toDestroy) {
-			item->destroy();
 		}
 	}
 	for (const auto &history : historiesToCheck) {
@@ -3004,19 +3004,14 @@ void Session::processMessagesDeleted(
 }
 
 void Session::processNonChannelMessagesDeleted(const QVector<MTPint> &data) {
-	auto toDestroy = std::vector<not_null<HistoryItem*>>();
 	auto historiesToCheck = base::flat_set<not_null<History*>>();
 	for (const auto &messageId : data) {
 		if (const auto item = nonChannelMessage(messageId.v)) {
 			const auto history = item->history();
-			toDestroy.push_back(item);
-			historiesToCheck.emplace(history);
-		}
-	}
-	if (!toDestroy.empty()) {
-		notifyItemsAboutToBeDestroyed(toDestroy);
-		for (const auto &item : toDestroy) {
-			item->destroy();
+			processMessageDelete(item);
+			if (!history->chatListMessageKnown()) {
+				historiesToCheck.emplace(history);
+			}
 		}
 	}
 	for (const auto &history : historiesToCheck) {

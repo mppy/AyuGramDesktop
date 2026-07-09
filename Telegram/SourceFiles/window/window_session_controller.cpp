@@ -128,7 +128,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_dialogs.h"
 #include "styles/style_layers.h" // st::boxLabel
 
-#include "ayu/ayu_settings.h"
+#include "purr/purr_settings.h"
 
 namespace Window {
 namespace {
@@ -2021,7 +2021,7 @@ void SessionController::activateFirstChatsFilter() {
 		return;
 	}
 	_filtersActivated = true;
-	if (!AyuSettings::getInstance().hideAllChatsFolder()) {
+	if (!PurrSettings::getInstance().hideAllChatsFolder()) {
 		setActiveChatsFilter(session().data().chatsFilters().defaultId());
 	}
 }

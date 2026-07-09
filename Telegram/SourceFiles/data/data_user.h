@@ -215,6 +215,10 @@ public:
 	[[nodiscard]] bool canSendIgnoreMoneyRestrictions() const;
 	[[nodiscard]] bool readDatesPrivate() const;
 	[[nodiscard]] bool allowsForwarding() const;
+	[[nodiscard]] bool isAyuNoForwards() const {
+		// AyuGram: use the peer-level noforwards flag for PurrForward detection
+		return flags() & Flag::NoForwardsPeerEnabled;
+	}
 	void setNoForwardsFlags(bool myEnabled, bool peerEnabled);
 	[[nodiscard]] bool isForum() const {
 		return flags() & Flag::Forum;

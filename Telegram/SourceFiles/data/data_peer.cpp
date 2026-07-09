@@ -55,7 +55,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/storage_facade.h"
 #include "storage/storage_shared_media.h"
 
-#include "ayu/ui/ayu_userpic.h"
+#include "purr/ui/purr_userpic.h"
 
 namespace {
 
@@ -521,8 +521,8 @@ QImage PeerData::GenerateUserpicImage(
 		const auto shape = peer->isForum()
 			? Ui::PeerUserpicShape::Forum
 			: Ui::PeerUserpicShape::Circle;
-		if (AyuUserpic::ShouldOverrideShape(shape)) {
-			radius = AyuUserpic::ComputeRadius(size);
+		if (PurrUserpic::ShouldOverrideShape(shape)) {
+			radius = PurrUserpic::ComputeRadius(size);
 		}
 	}
 	if (const auto userpic = peer->userpicCloudImage(view)) {
@@ -1741,8 +1741,19 @@ void PeerData::processTopics(const MTPVector<MTPForumTopic> &topics) {
 	}
 }
 
-bool PeerData::isAyuNoForwards() const {
+bool PeerData::isPurrNoForwards() const {
 	return !allowsForwarding();
+}
+
+bool PeerData::isAyuNoForwards() const {
+	if (const auto user = asUser()) {
+		return user->isAyuNoForwards();
+	} else if (const auto channel = asChannel()) {
+		return channel->isAyuNoForwards();
+	} else if (const auto chat = asChat()) {
+		return chat->isAyuNoForwards();
+	}
+	return false;
 }
 
 bool PeerData::allowsForwarding() const {
